@@ -1,0 +1,6 @@
+# Build
+/.obj
+/webserv
+
+# IDE
+/compile_commands.json
