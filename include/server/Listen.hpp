@@ -2,10 +2,14 @@
 
 #include "server/Socket.hpp"
 
+/// A socket that listens for incoming connections.
 class Listen: public Socket
 {
 public:
-    Listen(uint32_t address, int port);
+    Listen(Address address);
 
-    int accept();
+    Listen(const Listen&) = delete;
+    Listen& operator=(const Listen&) = delete;
+
+    Socket accept();
 };
