@@ -17,9 +17,12 @@ public:
     int     get_fd() const;
     Address get_address() const;
 
-    void bind();
+    /// Assigns the address specified by `address` to the socket
+    ///
+    /// @param address The address to bind to the socket
+    void bind(Address address);
 
 protected:
-    Address _addr;
+    Address _address;
     int     _fd;
 };

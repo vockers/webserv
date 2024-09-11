@@ -2,6 +2,13 @@
 
 #include <arpa/inet.h>
 
+Address::Address() : _port(0)
+{
+    _addr.sin_family      = AF_INET;
+    _addr.sin_addr.s_addr = INADDR_ANY;
+    _addr.sin_port        = 0;
+}
+
 Address::Address(sockaddr_in addr) : _addr(addr), _port(ntohs(addr.sin_port)) {}
 
 Address::Address(uint32_t address, int port) : _port(port)

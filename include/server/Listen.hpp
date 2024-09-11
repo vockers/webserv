@@ -11,5 +11,11 @@ public:
     Listen(const Listen&)            = delete;
     Listen& operator=(const Listen&) = delete;
 
+    /// Accept a new connection.
+    ///
+    /// Extracts the first connection request on the queue
+    /// of pending connections for the  listening  socket
+    ///
+    /// @return Socket of the accepted connection.
     Socket accept();
 };

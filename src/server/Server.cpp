@@ -49,7 +49,7 @@ void Server::run()
                 std::cout << "Accepted connection from " << client.get_address().to_string()
                           << "\n";
             } else {
-                /*handle_connection(events[i].data.fd);*/
+                // TODO: Handle client events
             }
         }
     }
