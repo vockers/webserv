@@ -10,7 +10,7 @@ public:
     Socket(Address address, int fd);
     ~Socket();
 
-    Socket(const Socket&) = delete;
+    Socket(const Socket&)            = delete;
     Socket& operator=(const Socket&) = delete;
     Socket(Socket&& other);
 

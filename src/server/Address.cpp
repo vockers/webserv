@@ -2,15 +2,13 @@
 
 #include <arpa/inet.h>
 
-Address::Address(sockaddr_in addr) : _addr(addr), _port(ntohs(addr.sin_port))
-{
-}
+Address::Address(sockaddr_in addr) : _addr(addr), _port(ntohs(addr.sin_port)) {}
 
 Address::Address(uint32_t address, int port) : _port(port)
 {
-    _addr.sin_family = AF_INET;
+    _addr.sin_family      = AF_INET;
     _addr.sin_addr.s_addr = address;
-    _addr.sin_port = htons(port);
+    _addr.sin_port        = htons(port);
 }
 
 Address::Address(const std::string& address, int port) : Address(inet_addr(address.c_str()), port)

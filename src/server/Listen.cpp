@@ -1,8 +1,9 @@
 #include "server/Listen.hpp"
 
 #include <fcntl.h>
-#include <stdexcept>
 #include <sys/socket.h>
+
+#include <stdexcept>
 
 Listen::Listen(Address address) : Socket(address)
 {

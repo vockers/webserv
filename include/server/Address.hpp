@@ -1,6 +1,7 @@
 #pragma once
 
 #include <netinet/in.h>
+
 #include <string>
 
 class Address
@@ -18,4 +19,3 @@ private:
     sockaddr_in _addr;
     int         _port;
 };
-    

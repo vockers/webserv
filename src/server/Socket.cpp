@@ -1,8 +1,9 @@
 #include "server/Socket.hpp"
 
-#include <stdexcept>
 #include <sys/socket.h>
 #include <unistd.h>
+
+#include <stdexcept>
 
 Socket::Socket(Address address) : _addr(address)
 {
@@ -14,9 +15,7 @@ Socket::Socket(Address address) : _addr(address)
     this->bind();
 }
 
-Socket::Socket(Address address, int fd) : _addr(address), _fd(fd)
-{
-}
+Socket::Socket(Address address, int fd) : _addr(address), _fd(fd) {}
 
 Socket::~Socket()
 {
@@ -41,11 +40,10 @@ Address Socket::get_address() const
 void Socket::bind()
 {
     const int reuse = 1;
-	if (setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int)) != 0) {
+    if (setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int)) != 0) {
         throw std::runtime_error("Failed to set SO_REUSEADDR");
-	}
+    }
     if (::bind(_fd, (sockaddr*)&_addr.get_sockaddr(), sizeof(sockaddr_in)) == -1) {
         throw std::runtime_error("Failed to bind socket");
     }
 }
-

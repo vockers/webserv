@@ -1,16 +1,17 @@
 #include "server/Server.hpp"
 
 #include <fcntl.h>
-#include <iostream>
-#include <stdexcept>
 #include <sys/epoll.h>
 #include <unistd.h>
+
+#include <iostream>
+#include <stdexcept>
 
 Server::Server(const std::string& name, const std::string& address, int port)
     : _name(name), _listen(Address(address, port))
 {
     std::cout << "Listening on " << _listen.get_address().to_string() << "\n";
-    
+
     _epoll_fd = epoll_create(1);
     if (_epoll_fd == -1) {
         throw std::runtime_error("Failed to create epoll instance");
@@ -36,7 +37,7 @@ void Server::run()
 {
     while (true) {
         epoll_event events[10];
-        int num_events = epoll_wait(_epoll_fd, events, 10, -1);
+        int         num_events = epoll_wait(_epoll_fd, events, 10, -1);
         if (num_events == -1) {
             throw std::runtime_error("Failed to wait for epoll events");
         }
@@ -45,7 +46,8 @@ void Server::run()
             if (events[i].data.fd == _listen.get_fd()) {
                 Socket client = _listen.accept();
                 _sockets.push_back(std::move(client));
-                std::cout << "Accepted connection from " << client.get_address().to_string() << "\n";
+                std::cout << "Accepted connection from " << client.get_address().to_string()
+                          << "\n";
             } else {
                 /*handle_connection(events[i].data.fd);*/
             }
