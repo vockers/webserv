@@ -1,6 +1,7 @@
 # Build
-/.obj
+/.obj/
 /webserv
 
 # IDE
 /compile_commands.json
+/.cache/
