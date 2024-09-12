@@ -33,3 +33,8 @@ fclean: clean
 	-rm -f $(NAME)
 
 re: fclean all
+
+format:
+	@clang-format -i $(SRCS) $(wildcard $(INCLUDE_DIR)/*/*.hpp) $(wildcard $(INCLUDE_DIR)/*/*.hpp)
+
+.PHONY: all debug release clean fclean re format
