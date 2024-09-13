@@ -4,6 +4,8 @@
 
 #include <string>
 
+namespace webserv::server
+{
 /// Represents an IP address and port.
 class Address
 {
@@ -24,3 +26,4 @@ private:
     sockaddr_in _addr;
     int         _port;
 };
+}  // namespace webserv::server

@@ -2,6 +2,8 @@
 
 #include "server/Socket.hpp"
 
+namespace webserv::server
+{
 /// A socket that listens for incoming connections.
 class Listen : public Socket
 {
@@ -19,3 +21,4 @@ public:
     /// @return Socket of the accepted connection.
     Socket accept();
 };
+}  // namespace webserv::server

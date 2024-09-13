@@ -5,6 +5,8 @@
 
 #include "server/Listen.hpp"
 
+namespace webserv::server
+{
 /// A single-threaded non-blocking web server.
 class Server
 {
@@ -22,3 +24,4 @@ private:
 
     std::vector<Socket> _sockets;
 };
+}  // namespace webserv::server

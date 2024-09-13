@@ -1,6 +1,6 @@
 #include "config/Lexer.hpp"
 
-namespace config
+namespace webserv::config
 {
 using Token = Lexer::Token;
 
@@ -45,4 +45,4 @@ bool Lexer::is_delimiter(char c)
 {
     return std::isspace(c) || c == '{' || c == '}' || c == ';';
 }
-}  // namespace config
+}  // namespace webserv::config

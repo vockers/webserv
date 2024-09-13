@@ -7,6 +7,8 @@
 #include <iostream>
 #include <stdexcept>
 
+namespace webserv::server
+{
 Server::Server(const std::string& name, const std::string& address, int port)
     : _name(name), _listen(Address(address, port))
 {
@@ -54,3 +56,4 @@ void Server::run()
         }
     }
 }
+}  // namespace webserv::server
