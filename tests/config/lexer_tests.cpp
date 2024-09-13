@@ -38,7 +38,7 @@ TEST(LexerTests, SingleWordWithWhitespaceAndSemicolon)
     EXPECT_EQ(token.value, "word");
 
     token = lexer.next_token();
-    EXPECT_EQ(token.type, Lexer::Token::Type::RULE_END);
+    EXPECT_EQ(token.type, Lexer::Token::Type::END);
 }
 
 TEST(LexerTests, SingleWordWithWhitespaceAndBraces)
@@ -66,6 +66,6 @@ TEST(LexerTests, SingleWordWithWhitespaceAndBracesAndSemicolon)
     EXPECT_EQ(token.type, Lexer::Token::Type::BLOCK_END);
 
     token = lexer.next_token();
-    EXPECT_EQ(token.type, Lexer::Token::Type::RULE_END);
+    EXPECT_EQ(token.type, Lexer::Token::Type::END);
 }
 

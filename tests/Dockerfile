@@ -15,8 +15,11 @@ COPY ../. .
 
 # Compile the source code
 RUN clang++ -std=c++20 -I./include -o test \
-    tests/config/lexer_tests.cpp \
+    src/config/Directive.cpp \
     src/config/Lexer.cpp \
+    src/config/Parser.cpp \
+    tests/config/lexer_tests.cpp \
+    tests/config/parser_tests.cpp \
     -lgtest -lgtest_main -pthread
 
 # Run the tests

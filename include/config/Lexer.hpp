@@ -13,13 +13,15 @@ public:
         enum class Type
         {
             WORD,
-            RULE_END,
+            END,
             BLOCK_START,
             BLOCK_END,
             NONE,
         };
         Type                       type;
         std::optional<std::string> value;
+
+        static const std::string type_to_string(Type type);
     };
 
     Lexer(const std::string& input);
