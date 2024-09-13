@@ -1,0 +1,10 @@
+<config>              ::= <config> | <rule> | <block> | <rule> <config> | <block> <config>
+<block>               ::= <server_block>
+
+<server_block>        ::= server { <server_directives> }
+<server_directives>   ::= <server_directive> | <server_directive> <server_directives>
+<server_directive>    ::= listen <port> | server_name <server_name> | <location_block>
+
+<location_block>      ::= location <uri> { <location_directives> }
+<location_directives> ::= <location_directive> | <location_directive> <location_directives>
+
