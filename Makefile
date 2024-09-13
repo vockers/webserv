@@ -34,7 +34,11 @@ fclean: clean
 
 re: fclean all
 
+test:
+	@docker build -t webserv-tests -f ./tests/Dockerfile .
+	docker run -it webserv-tests
+
 format:
 	@clang-format -i $(SRCS) $(wildcard $(INCLUDE_DIR)/*/*.hpp) $(wildcard $(INCLUDE_DIR)/*/*.hpp)
 
-.PHONY: all debug release clean fclean re format
+.PHONY: all debug release clean fclean re test format

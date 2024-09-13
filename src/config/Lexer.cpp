@@ -47,6 +47,6 @@ void Lexer::skip_whitespaces()
 
 bool Lexer::is_delimiter(char c)
 {
-    return std::isspace(c) || c == '{' || c == '}';
+    return std::isspace(c) || c == '{' || c == '}' || c == ';';
 }
 }
