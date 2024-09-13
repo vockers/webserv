@@ -5,6 +5,8 @@
 
 #include <stdexcept>
 
+namespace webserv::server
+{
 Listen::Listen(Address address) : Socket(address)
 {
     if (listen(_fd, 16) == -1) {
@@ -27,3 +29,4 @@ Socket Listen::accept()
 
     return Socket(Address(accepted_addr), fd);
 }
+}  // namespace webserv::server

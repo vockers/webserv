@@ -5,6 +5,8 @@
 
 #include <stdexcept>
 
+namespace webserv::server
+{
 Socket::Socket(Address address)
 {
     _fd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
@@ -48,3 +50,4 @@ void Socket::bind(Address address)
     }
     _address = address;
 }
+}  // namespace webserv::server

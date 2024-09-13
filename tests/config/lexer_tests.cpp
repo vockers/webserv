@@ -2,7 +2,7 @@
 
 #include "config/Lexer.hpp"
 
-using namespace config;
+using namespace webserv::config;
 
 TEST(LexerTests, EmptyInput)
 {
@@ -13,7 +13,7 @@ TEST(LexerTests, EmptyInput)
 
 TEST(LexerTests, SingleWord)
 {
-    config::Lexer lexer("word");
+    Lexer lexer("word");
     auto token = lexer.next_token();
     EXPECT_EQ(token.type, Lexer::Token::Type::WORD);
     EXPECT_EQ(token.value, "word");
@@ -24,7 +24,7 @@ TEST(LexerTests, SingleWord)
 
 TEST(LexerTests, SingleWordWithWhitespace)
 {
-    config::Lexer lexer("  word  ");
+    Lexer lexer("  word  ");
     auto token = lexer.next_token();
     EXPECT_EQ(token.type, Lexer::Token::Type::WORD);
     EXPECT_EQ(token.value, "word");
@@ -32,7 +32,7 @@ TEST(LexerTests, SingleWordWithWhitespace)
 
 TEST(LexerTests, SingleWordWithWhitespaceAndSemicolon)
 {
-    config::Lexer lexer("  word;  ");
+    Lexer lexer("  word;  ");
     auto token = lexer.next_token();
     EXPECT_EQ(token.type, Lexer::Token::Type::WORD);
     EXPECT_EQ(token.value, "word");
@@ -43,7 +43,7 @@ TEST(LexerTests, SingleWordWithWhitespaceAndSemicolon)
 
 TEST(LexerTests, SingleWordWithWhitespaceAndBraces)
 {
-    config::Lexer lexer("  word {  ");
+    Lexer lexer("  word {  ");
     auto token = lexer.next_token();
     EXPECT_EQ(token.type, Lexer::Token::Type::WORD);
     EXPECT_EQ(token.value, "word");
@@ -54,7 +54,7 @@ TEST(LexerTests, SingleWordWithWhitespaceAndBraces)
 
 TEST(LexerTests, SingleWordWithWhitespaceAndBracesAndSemicolon)
 {
-    config::Lexer lexer("  word { };  ");
+    Lexer lexer("  word { };  ");
     auto token = lexer.next_token();
     EXPECT_EQ(token.type, Lexer::Token::Type::WORD);
     EXPECT_EQ(token.value, "word");

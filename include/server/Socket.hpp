@@ -2,6 +2,8 @@
 
 #include "server/Address.hpp"
 
+namespace webserv::server
+{
 /// A wrapper around a socket file descriptor.
 class Socket
 {
@@ -26,3 +28,4 @@ protected:
     Address _address;
     int     _fd;
 };
+}  // namespace webserv::server

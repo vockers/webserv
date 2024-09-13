@@ -3,7 +3,7 @@
 #include <optional>
 #include <string>
 
-namespace config
+namespace webserv::config
 {
 class Lexer
 {
@@ -33,4 +33,4 @@ private:
     void skip_whitespaces();
     bool is_delimiter(char c);
 };
-}  // namespace config
+}  // namespace webserv::config

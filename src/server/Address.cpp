@@ -2,6 +2,8 @@
 
 #include <arpa/inet.h>
 
+namespace webserv::server
+{
 Address::Address() : _port(0)
 {
     _addr.sin_family      = AF_INET;
@@ -38,3 +40,4 @@ std::string Address::to_string() const
     inet_ntop(AF_INET, &_addr.sin_addr, buffer, INET_ADDRSTRLEN);
     return std::string(buffer) + ":" + std::to_string(_port);
 }
+}  // namespace webserv::server
