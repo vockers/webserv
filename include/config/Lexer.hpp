@@ -33,4 +33,4 @@ private:
     void skip_whitespaces();
     bool is_delimiter(char c);
 };
-}
+}  // namespace config

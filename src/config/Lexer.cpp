@@ -4,11 +4,7 @@ namespace config
 {
 using Token = Lexer::Token;
 
-Lexer::Lexer(const std::string& input)
-    : _input(input)
-    , _current(_input.begin())
-{
-}
+Lexer::Lexer(const std::string& input) : _input(input), _current(_input.begin()) {}
 
 Token Lexer::next_token()
 {
@@ -49,4 +45,4 @@ bool Lexer::is_delimiter(char c)
 {
     return std::isspace(c) || c == '{' || c == '}' || c == ';';
 }
-}
+}  // namespace config
