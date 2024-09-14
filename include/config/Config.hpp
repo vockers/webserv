@@ -9,6 +9,7 @@ class Config
 public:
     Config(const std::string& file_path);
 
+    /// Returns the main ("") directive of the configuration.
     const Directive& get_main_directive() const;
 
 private:

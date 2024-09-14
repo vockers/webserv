@@ -2,6 +2,8 @@
 
 namespace webserv::config
 {
+Directive::Directive() : _name(""), _parameters(), _children() {}
+
 Directive::Directive(std::string name, Parameters parameters, Directives children)
     : _name(std::move(name)), _parameters(std::move(parameters)), _children(std::move(children))
 {

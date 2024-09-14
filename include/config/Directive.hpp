@@ -11,6 +11,7 @@ public:
     using Parameters = std::vector<std::string>;
     using Directives = std::vector<Directive>;
 
+    Directive();
     Directive(std::string name, Parameters parameters, Directives children);
 
     const std::string& get_name() const;
