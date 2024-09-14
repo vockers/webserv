@@ -129,18 +129,27 @@ TEST(ParserTests, ParseInvalidConfig)
 TEST(ParserTests, ParseUnallowedDirective)
 {
     Parser parser(" unallowed_directive; ");
-
     EXPECT_THROW(parser.parse(), std::runtime_error);
 
     Parser parser2("http { unallowed_directive; }");
-
     EXPECT_THROW(parser2.parse(), std::runtime_error);
 
     Parser parser3("http { server { unallowed_directive; } }");
-
     EXPECT_THROW(parser3.parse(), std::runtime_error);
 
     Parser parser4(" unallowed_directive { log_level debug; } ");
-
     EXPECT_THROW(parser4.parse(), std::runtime_error);
+}
+
+// Test unique directive
+TEST(ParserTests, ParseUniqueDirective)
+{
+    Parser parser("http { log_level debug; log_level info; }");
+    EXPECT_THROW(parser.parse(), std::runtime_error);
+
+    Parser parser2("http { server { log_level debug; log_level info; } }");
+    EXPECT_THROW(parser2.parse(), std::runtime_error);
+
+    Parser parser3("log_level debug; log_level info;");
+    EXPECT_THROW(parser3.parse(), std::runtime_error);
 }

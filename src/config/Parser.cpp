@@ -15,7 +15,7 @@ Directive Parser::parse()
     Directive::Directives children;
 
     while (_next_token.type != Token::Type::NONE) {
-        children.push_back(this->parse_directive(""));
+        children.push_back(this->parse_directive(children, ""));
     }
 
     return Directive("", {}, children);
@@ -37,20 +37,28 @@ Parser::Token Parser::take_token(Token::Type type)
     return token;
 }
 
-void Parser::is_directive_allowed(const std::string& parent_directive, const std::string& directive)
+void Parser::validate_directive(const Directive::Directives& siblings,
+                                const std::string&           parent_directive,
+                                const std::string&           directive)
 {
+    // Check if the directive is allowed in the parent directive
     auto it = _allowed_directives.find(parent_directive);
-    if (it == _allowed_directives.end()) {
+    if (it == _allowed_directives.end() ||
+        std::find(it->second.begin(), it->second.end(), directive) == it->second.end()) {
         throw std::runtime_error("Directive '" + directive + "' is not allowed in '" +
                                  parent_directive + "'");
     }
-    if (std::find(it->second.begin(), it->second.end(), directive) == it->second.end()) {
-        throw std::runtime_error("Directive '" + directive + "' is not allowed in '" +
-                                 parent_directive + "'");
+
+    // Check if the directive is unique
+    for (const auto& d : siblings) {
+        if (d.get_name() == directive) {
+            throw std::runtime_error("Directive '" + directive + "' is not unique");
+        }
     }
 }
 
-Directive Parser::parse_directive(const std::string& parent_directive)
+Directive Parser::parse_directive(const Directive::Directives& siblings,
+                                  const std::string&           parent_directive)
 {
     std::string           name;
     Directive::Parameters parameters;
@@ -58,7 +66,7 @@ Directive Parser::parse_directive(const std::string& parent_directive)
 
     if (_next_token.type == Token::Type::WORD) {
         name = *_next_token.value;
-        this->is_directive_allowed(parent_directive, name);
+        this->validate_directive(siblings, parent_directive, name);
         this->take_token(Token::Type::WORD);
     } else {
         throw std::runtime_error("Expected 'word' token");
@@ -71,7 +79,7 @@ Directive Parser::parse_directive(const std::string& parent_directive)
         this->take_token(Token::Type::BLOCK_START);
 
         while (_next_token.type != Token::Type::BLOCK_END) {
-            children.push_back(parse_directive(name));
+            children.push_back(parse_directive(children, name));
         }
         this->take_token(Token::Type::BLOCK_END);
     } else {
