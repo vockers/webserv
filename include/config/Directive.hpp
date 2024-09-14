@@ -22,4 +22,4 @@ private:
     Parameters  _parameters;
     Directives  _children;
 };
-}
+}  // namespace webserv::config

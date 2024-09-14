@@ -7,7 +7,7 @@ namespace webserv::config
 class Config
 {
 public:
-    Config(Directive main_directive);
+    Config(const std::string& file_path);
 
     const Directive& get_main_directive() const;
 

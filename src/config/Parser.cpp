@@ -1,40 +1,56 @@
 #include "config/Parser.hpp"
 
+#include <algorithm>
 #include <stdexcept>
 
 namespace webserv::config
 {
-Parser::Parser(const std::string& input)
-    : _lexer(input)
+Parser::Parser(const std::string& input) : _lexer(input)
 {
     _next_token = _lexer.next_token();
 }
 
 Directive Parser::parse()
 {
-    if (_next_token.type == Token::Type::NONE) {
-        return Directive("", {}, {});
+    Directive::Directives children;
+
+    while (_next_token.type != Token::Type::NONE) {
+        children.push_back(this->parse_directive(""));
     }
 
-    return parse_directive();
+    return Directive("", {}, children);
 }
 
 Parser::Token Parser::take_token(Token::Type type)
 {
     Token token = _next_token;
-    
+
     if (token.type == Token::Type::NONE) {
         std::runtime_error("Unexpected end of input");
     }
     if (token.type != type) {
-        throw std::runtime_error("Unexpected token: " + Token::type_to_string(token.type) + " expected: " + Token::type_to_string(type));
+        throw std::runtime_error("Unexpected token: " + Token::type_to_string(token.type) +
+                                 " expected: " + Token::type_to_string(type));
     }
 
     _next_token = _lexer.next_token();
     return token;
 }
 
-Directive Parser::parse_directive()
+void Parser::is_directive_allowed(const std::string& parent_directive, const std::string& directive)
+{
+    auto it = _allowed_directives.find(parent_directive);
+    if (it == _allowed_directives.end()) {
+        throw std::runtime_error("Directive '" + directive + "' is not allowed in '" +
+                                 parent_directive + "'");
+    }
+    if (std::find(it->second.begin(), it->second.end(), directive) == it->second.end()) {
+        throw std::runtime_error("Directive '" + directive + "' is not allowed in '" +
+                                 parent_directive + "'");
+    }
+}
+
+Directive Parser::parse_directive(const std::string& parent_directive)
 {
     std::string           name;
     Directive::Parameters parameters;
@@ -42,31 +58,29 @@ Directive Parser::parse_directive()
 
     if (_next_token.type == Token::Type::WORD) {
         name = *_next_token.value;
-        _next_token = _lexer.next_token();
+        this->is_directive_allowed(parent_directive, name);
+        this->take_token(Token::Type::WORD);
     } else {
         throw std::runtime_error("Expected 'word' token");
     }
     while (_next_token.type == Token::Type::WORD) {
-        parameters.push_back(*_next_token.value);
-        _next_token = _lexer.next_token();
+        parameters.push_back(*this->take_token(Token::Type::WORD).value);
     }
 
     if (_next_token.type == Token::Type::BLOCK_START) {
-        _next_token = _lexer.next_token();
+        this->take_token(Token::Type::BLOCK_START);
 
         while (_next_token.type != Token::Type::BLOCK_END) {
-            children.push_back(parse_directive());
+            children.push_back(parse_directive(name));
         }
+        this->take_token(Token::Type::BLOCK_END);
     } else {
         if (parameters.size() < 1) {
             throw std::runtime_error("Expected at least one parameter");
         }
-        if (_next_token.type != Token::Type::END) {
-            throw std::runtime_error("Expected '{' or ';'");
-        }
+
+        this->take_token(Token::Type::END);
     }
-    
-    _next_token = _lexer.next_token();
 
     return Directive(name, parameters, children);
 }
