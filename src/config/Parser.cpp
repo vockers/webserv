@@ -60,10 +60,6 @@ Directive Parser::parse_directive(const Directive::Directives& siblings, const s
         }
         this->take_token(Token::Type::BLOCK_END);
     } else {
-        if (parameters.size() < 1) {
-            throw std::runtime_error("Expected at least one parameter");
-        }
-
         this->take_token(Token::Type::END);
     }
 

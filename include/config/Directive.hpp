@@ -1,6 +1,7 @@
 #pragma once
 
 #include <map>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -19,6 +20,9 @@ public:
 
         Keys children = {};
         bool unique   = false;
+
+        std::optional<size_t> min_params = std::nullopt;
+        std::optional<size_t> max_params = std::nullopt;
     };
 
     Directive();
