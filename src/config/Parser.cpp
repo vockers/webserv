@@ -1,6 +1,5 @@
 #include "config/Parser.hpp"
 
-#include <algorithm>
 #include <stdexcept>
 
 namespace webserv::config
@@ -37,36 +36,14 @@ Parser::Token Parser::take_token(Token::Type type)
     return token;
 }
 
-void Parser::validate_directive(const Directive::Directives& siblings,
-                                const std::string&           parent_directive,
-                                const std::string&           directive)
-{
-    // Check if the directive is allowed in the parent directive
-    auto it = _allowed_directives.find(parent_directive);
-    if (it == _allowed_directives.end() ||
-        std::find(it->second.begin(), it->second.end(), directive) == it->second.end()) {
-        throw std::runtime_error("Directive '" + directive + "' is not allowed in '" +
-                                 parent_directive + "'");
-    }
-
-    // Check if the directive is unique
-    for (const auto& d : siblings) {
-        if (d.get_name() == directive) {
-            throw std::runtime_error("Directive '" + directive + "' is not unique");
-        }
-    }
-}
-
-Directive Parser::parse_directive(const Directive::Directives& siblings,
-                                  const std::string&           parent_directive)
+Directive Parser::parse_directive(const Directive::Directives& siblings, const std::string& parent)
 {
     std::string           name;
-    Directive::Parameters parameters;
+    Directive::Keys       parameters;
     Directive::Directives children;
 
     if (_next_token.type == Token::Type::WORD) {
         name = *_next_token.value;
-        this->validate_directive(siblings, parent_directive, name);
         this->take_token(Token::Type::WORD);
     } else {
         throw std::runtime_error("Expected 'word' token");
@@ -90,6 +67,8 @@ Directive Parser::parse_directive(const Directive::Directives& siblings,
         this->take_token(Token::Type::END);
     }
 
-    return Directive(name, parameters, children);
+    Directive directive(name, parameters, children);
+    directive.validate(parent, siblings);
+    return directive;
 }
 }  // namespace webserv::config
