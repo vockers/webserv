@@ -4,6 +4,27 @@ namespace webserv::config
 {
 using Token = Lexer::Token;
 
+const std::string Token::type_to_string(Token::Type type)
+{
+    switch (type) {
+    case Token::Type::WORD:
+        return "string";
+        break;
+    case Token::Type::END:
+        return ";";
+        break;
+    case Token::Type::BLOCK_START:
+        return "{";
+        break;
+    case Token::Type::BLOCK_END:
+        return "}";
+        break;
+    case Token::Type::NONE:
+        return "EOF";
+        break;
+    }
+}
+
 Lexer::Lexer(const std::string& input) : _input(input), _current(_input.begin()) {}
 
 Token Lexer::next_token()
@@ -17,7 +38,7 @@ Token Lexer::next_token()
     switch (*_current) {
     case ';':
         ++_current;
-        return {Token::Type::RULE_END, {}};
+        return {Token::Type::END, {}};
     case '{':
         ++_current;
         return {Token::Type::BLOCK_START, {}};
