@@ -209,3 +209,15 @@ TEST(ParserTests, ParseMaxParams)
     Parser parser3("http { server { location / { limit_except GET; limit_except POST; } } }");
     EXPECT_THROW(parser3.parse(), std::runtime_error);
 }
+
+TEST(ParserTests, ParseAllowedParameters)
+{
+    Parser parser("log_level invalid;");
+    EXPECT_THROW(parser.parse(), std::runtime_error);
+
+    Parser parser2("http { server { autoindex invalid; } }");
+    EXPECT_THROW(parser2.parse(), std::runtime_error);
+
+    Parser parser3("http { server { location / { limit_except invalid; } } }");
+    EXPECT_THROW(parser3.parse(), std::runtime_error);
+}

@@ -1,9 +1,7 @@
 #include "config/Directive.hpp"
 
-#include <algorithm>
 #include <optional>
 #include <stdexcept>
-#include <variant>
 
 #include "utils/std_utils.hpp"
 
@@ -23,7 +21,7 @@ const std::string& Directive::get_name() const
     return _name;
 }
 
-const Directive::Keys& Directive::get_parameters() const
+const Directive::Parameters& Directive::get_parameters() const
 {
     return _parameters;
 }
@@ -47,16 +45,16 @@ void Directive::validate(const std::string& parent, const Directives& siblings) 
         {"location",             {{"autoindex", "client_max_body_size",
                                    "error_page", "index", "limit_except",
                                    "location", "return", "root", "upload_dir"}, false, 1, nullopt}},
-        {"autoindex",            {{}, true, 1, 1}},
+        {"log_level",            {{}, true, 1, 1, {"debug", "info", "warn", "error"}}},
+        {"limit_except",         {{}, true, 1, nullopt, {"GET", "POST", "DELETE"}}},
+        {"autoindex",            {{}, true, 1, 1, {"on", "off"}}},
         {"client_max_body_size", {{}, true, 1, 1}},
-        {"log_level",            {{}, true, 1, 1}},
         {"return",               {{}, true, 1, 2}},
         {"root",                 {{}, true, 1, 1}},
         {"error_page",           {{}, false, 2}},
         {"listen",               {{}, false, 1}},
         {"server_name",          {{}, false, 1}},
-        {"index",                {{}, true, 1}},
-        {"limit_except",         {{}, true, 1}}
+        {"index",                {{}, true, 1}}
     };
     // clang-format on
 
@@ -92,6 +90,16 @@ void Directive::validate(const std::string& parent, const Directives& siblings) 
         for (const auto& d : siblings) {
             if (d.get_name() == _name) {
                 throw std::runtime_error("Directive '" + _name + "' is not unique");
+            }
+        }
+    }
+
+    // Check if the parameters are allowed
+    if (!constraint.allowed_params.empty()) {
+        for (const auto& param : _parameters) {
+            if (!utils::contains(constraint.allowed_params, param)) {
+                throw std::runtime_error("Parameter '" + param +
+                                         "' is not allowed for directive '" + _name + "'");
             }
         }
     }

@@ -11,6 +11,7 @@ class Directive
 {
 public:
     using Keys       = std::vector<std::string>;
+    using Parameters = std::vector<std::string>;
     using Directives = std::vector<Directive>;
 
     /// Used for validation
@@ -23,13 +24,15 @@ public:
 
         std::optional<size_t> min_params = std::nullopt;
         std::optional<size_t> max_params = std::nullopt;
+
+        Parameters allowed_params = {};
     };
 
     Directive();
     Directive(const std::string& name, const Keys& parameters, const Directives& children);
 
     const std::string& get_name() const;
-    const Keys&        get_parameters() const;
+    const Parameters&  get_parameters() const;
     const Directives&  get_children() const;
 
     /// Validate the directive based certain constraints
@@ -40,7 +43,7 @@ public:
 
 private:
     std::string _name;
-    Keys        _parameters;
+    Parameters  _parameters;
     Directives  _children;
 };
 }  // namespace webserv::config
