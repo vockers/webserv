@@ -6,7 +6,7 @@ using namespace webserv::config;
 
 TEST(ConfigTests, ConfigTest)
 {
-    Config config("tests/cfgs/test.conf");
+    Config config("tests/conf/test.conf");
 
     const Directive& main = config.get_main_directive();
 
