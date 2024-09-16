@@ -4,7 +4,6 @@
 #include <sys/epoll.h>
 #include <unistd.h>
 
-#include <iostream>
 #include <stdexcept>
 
 #include "utils/Logger.hpp"
@@ -53,8 +52,8 @@ void Server::run()
             if (events[i].data.fd == _listen.get_fd()) {
                 Socket client = _listen.accept();
                 _sockets.push_back(std::move(client));
-                std::cout << "Accepted connection from " << client.get_address().to_string()
-                          << "\n";
+                _elog.log(ErrorLogger::INFO,
+                          "Accepted connection from " + client.get_address().to_string());
             } else {
                 // TODO: Handle client events
             }
