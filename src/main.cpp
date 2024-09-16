@@ -2,15 +2,21 @@
 #include "utils/Logger.hpp"
 
 using webserv::server::Server;
-using webserv::utils::Logger;
+using webserv::utils::ErrorLogger;
 
 int main()
 {
-    LOG_INFO("Starting webserv...");
+    ErrorLogger elog(ErrorLogger::DEBUG);
 
-    Server server("server", "0.0.0.0", 8081);
+    elog.log(ErrorLogger::INFO, "Starting webserv...");
 
-    server.run();
+    try {
+        Server server("server", "0.0.0.0", 8080, elog);
+
+        server.run();
+    } catch (const std::exception& e) {
+        elog.log(ErrorLogger::CRITICAL, e.what());
+    }
 
     return 0;
 }

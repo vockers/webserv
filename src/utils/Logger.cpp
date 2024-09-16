@@ -1,44 +1,54 @@
 #include "utils/Logger.hpp"
 
-#include <iostream>
 #include <chrono>
+#include <iostream>
+#include <sstream>
+
+#include "utils/Color.hpp"
 
 namespace webserv::utils
 {
-Logger::Logger(Level level, const std::string& message)
-{
-    _buffer << "[" << get_timestamp() << "] [" << level_to_string(level) << "] " << message << std::endl;
-}
-
-Logger::~Logger()
-{
-    std::cout << _buffer.str();
-}
-const char* Logger::level_to_string(Level level)
-{
-    switch (level) {
-    case Level::DEBUG:
-        return "DEBUG";
-    case Level::INFO:
-        return "INFO";
-    case Level::WARNING:
-        return "WARNING";
-    case Level::ERROR:
-        return "ERROR";
-    case Level::CRITICAL:
-        return "CRITICAL";
-    default:
-        return "UNKNOWN";
-    }
-}
+Logger::Logger() : _stream(std::cerr) {}
 
 std::string Logger::get_timestamp()
 {
-    auto now = std::chrono::system_clock::now();
+    auto        now  = std::chrono::system_clock::now();
     std::time_t time = std::chrono::system_clock::to_time_t(now);
-    char buffer[20];
+    char        buffer[20];
 
     std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", std::localtime(&time));
     return std::string(buffer);
 }
+
+ErrorLogger::ErrorLogger(Level level) : _level(level) {}
+
+void ErrorLogger::log(ErrorLogger::Level level, const std::string& message)
+{
+    if (level < _level) {
+        return;
+    }
+
+    std::stringstream buffer;
+    buffer << "[" << get_timestamp() << "]";
+    switch (level) {
+    case Level::DEBUG:
+        buffer << Color::CYAN << "[DEBUG]";
+        break;
+    case Level::INFO:
+        buffer << Color::GREEN << "[INFO]";
+        break;
+    case Level::WARNING:
+        buffer << Color::YELLOW << "[WARNING]";
+        break;
+    case Level::ERROR:
+        buffer << Color::RED << "[ERROR]";
+        break;
+    case Level::CRITICAL:
+        buffer << Color::MAGENTA << "[CRITICAL]";
+        break;
+    }
+
+    buffer << Color::RESET << ": " << message << std::endl;
+    _stream << buffer.str();
 }
+}  // namespace webserv::utils

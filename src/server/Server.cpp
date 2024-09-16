@@ -7,12 +7,17 @@
 #include <iostream>
 #include <stdexcept>
 
+#include "utils/Logger.hpp"
+
 namespace webserv::server
 {
-Server::Server(const std::string& name, const std::string& address, int port)
-    : _name(name), _listen(Address(address, port))
+
+using webserv::utils::ErrorLogger;
+
+Server::Server(const std::string& name, const std::string& address, int port, ErrorLogger& elog)
+    : _name(name), _listen(Address(address, port)), _elog(elog)
 {
-    std::cout << "Listening on " << _listen.get_address().to_string() << "\n";
+    _elog.log(ErrorLogger::INFO, "Listening on " + _listen.get_address().to_string());
 
     _epoll_fd = epoll_create(1);
     if (_epoll_fd == -1) {
