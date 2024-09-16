@@ -1,24 +1,55 @@
 #include "config/Directive.hpp"
 
 #include <optional>
-#include <stdexcept>
-
-#include "utils/std_utils.hpp"
 
 using std::nullopt;
 
 namespace webserv::config
 {
-Directive::Directive() : _name(""), _parameters(), _children() {}
+using Type = Directive::Type;
 
-Directive::Directive(const std::string& name, const Keys& parameters, const Directives& children)
-    : _name(name), _parameters(parameters), _children(children)
-{
-}
+// clang-format off
+const std::map<std::string, Directive::Type> Directive::TYPE_MAP = {
+    {"",                     MAIN},
+    {"http",                 HTTP},
+    {"server",               SERVER},
+    {"location",             LOCATION},
+    {"server_name",          SERVER_NAME},
+    {"listen",               LISTEN},
+    {"root",                 ROOT},
+    {"index",                INDEX},
+    {"log_level",            LOG_LEVEL},
+    {"limit_except",         LIMIT_EXCEPT},
+    {"autoindex",            AUTOINDEX},
+    {"client_max_body_size", CLIENT_MAX_BODY_SIZE},
+    {"return",               RETURN},
+    {"error_page",           ERROR_PAGE}
+};
 
-const std::string& Directive::get_name() const
+// format: {{<allowed parents>, <unique>, [min params], [max params]}}
+const Directive::Constraint Directive::CONSTRAINTS[] = {
+    {{}},                                        // MAIN
+    {{MAIN}, true, nullopt, 0},                  // HTTP
+    {{HTTP}, false, nullopt, 0},                 // SERVER
+    {{SERVER, LOCATION}, false, 1},              // LOCATION
+    {{SERVER}, false, 1},                        // SERVER_NAME
+    {{SERVER}, false, 1},                        // LISTEN
+    {{HTTP, SERVER, LOCATION}, true, 1, 1},      // ROOT
+    {{HTTP, SERVER, LOCATION}, true, 1},         // INDEX
+    {{MAIN}, true, 1, 1},                        // LOG_LEVEL
+    {{LOCATION}, true, 1, nullopt},              // LIMIT_EXCEPT
+    {{HTTP, SERVER, LOCATION}, true, 1, 1},      // AUTOINDEX
+    {{HTTP, SERVER, LOCATION}, true, 1, 1},      // CLIENT_MAX_BODY_SIZE
+    {{HTTP, SERVER, LOCATION}, true, 1, 2},      // RETURN
+    {{HTTP, SERVER, LOCATION}, false, 2}         // ERROR_PAGE
+};
+// clang-format on
+
+Directive::Directive(Type type, Directive* parent) : _type(type), _parent(parent) {}
+
+Type Directive::get_type() const
 {
-    return _name;
+    return _type;
 }
 
 const Directive::Parameters& Directive::get_parameters() const
@@ -31,77 +62,18 @@ const Directive::Directives& Directive::get_children() const
     return _children;
 }
 
-void Directive::validate(const std::string& parent, const Directives& siblings) const
+const Directive* Directive::get_parent() const
 {
-    // clang-format off
-    // format: {<name>, {<allowed children>, <unique>, [min params], [max params]}}
-    static const Constraint::Constraints constraints = {
-        {"",                     {{"http", "log_level"}}},
-        {"http",                 {{"autoindex", "client_max_body_size",
-                                   "error_page", "index", "root", "server", "upload_dir"}, true, nullopt, 0}},
-        {"server",               {{"autoindex", "client_max_body_size",
-                                   "error_page", "index", "listen", "location",
-                                   "return", "root", "server_name", "upload_dir"}, false, nullopt, 0}},
-        {"location",             {{"autoindex", "client_max_body_size",
-                                   "error_page", "index", "limit_except",
-                                   "location", "return", "root", "upload_dir"}, false, 1, nullopt}},
-        {"log_level",            {{}, true, 1, 1, {"debug", "info", "warn", "error"}}},
-        {"limit_except",         {{}, true, 1, nullopt, {"GET", "POST", "DELETE"}}},
-        {"autoindex",            {{}, true, 1, 1, {"on", "off"}}},
-        {"client_max_body_size", {{}, true, 1, 1}},
-        {"return",               {{}, true, 1, 2}},
-        {"root",                 {{}, true, 1, 1}},
-        {"error_page",           {{}, false, 2}},
-        {"listen",               {{}, false, 1}},
-        {"server_name",          {{}, false, 1}},
-        {"index",                {{}, true, 1}}
-    };
-    // clang-format on
+    return _parent;
+}
 
-    // Check if the directive is allowed
-    auto it = constraints.find(_name);
-    if (it == constraints.end()) {
-        throw std::runtime_error("Directive '" + _name + "' is not allowed");
-    }
-    const auto& constraint = it->second;
+void Directive::add_parameter(const Value& value)
+{
+    _parameters.push_back(value);
+}
 
-    // Check if the directive is allowed in the parent directive
-    auto parent_it = constraints.find(parent);
-    if (parent_it == constraints.end()) {
-        throw std::runtime_error("Directive '" + parent + "' is not allowed");
-    }
-    const auto& parent_constraint = parent_it->second;
-    if (!utils::contains(parent_constraint.children, _name)) {
-        throw std::runtime_error("Directive '" + _name + "' is not allowed in '" + parent + "'");
-    }
-
-    // Check if the directive has the correct number of parameters
-    if (constraint.min_params.has_value() && _parameters.size() < *constraint.min_params) {
-        throw std::runtime_error("Directive '" + _name + "' requires at least " +
-                                 std::to_string(*constraint.min_params) + " parameters");
-    }
-    if (constraint.max_params.has_value() && _parameters.size() > *constraint.max_params) {
-        throw std::runtime_error("Directive '" + _name + "' requires at most " +
-                                 std::to_string(*it->second.max_params) + " parameters");
-    }
-
-    // Check if the directive is unique
-    if (constraint.unique) {
-        for (const auto& d : siblings) {
-            if (d.get_name() == _name) {
-                throw std::runtime_error("Directive '" + _name + "' is not unique");
-            }
-        }
-    }
-
-    // Check if the parameters are allowed
-    if (!constraint.allowed_params.empty()) {
-        for (const auto& param : _parameters) {
-            if (!utils::contains(constraint.allowed_params, param)) {
-                throw std::runtime_error("Parameter '" + param +
-                                         "' is not allowed for directive '" + _name + "'");
-            }
-        }
-    }
+void Directive::add_child(const Directive& child)
+{
+    _children.push_back(child);
 }
 }  // namespace webserv::config

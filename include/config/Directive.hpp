@@ -3,6 +3,7 @@
 #include <map>
 #include <optional>
 #include <string>
+#include <variant>
 #include <vector>
 
 namespace webserv::config
@@ -10,17 +11,33 @@ namespace webserv::config
 class Directive
 {
 public:
-    using Keys       = std::vector<std::string>;
-    using Parameters = std::vector<std::string>;
+    using Value      = std::variant<std::string, int>;
+    using Parameters = std::vector<Value>;
     using Directives = std::vector<Directive>;
+
+    enum Type : int
+    {
+        MAIN,
+        HTTP,
+        SERVER,
+        LOCATION,
+        SERVER_NAME,
+        LISTEN,
+        ROOT,
+        INDEX,
+        LOG_LEVEL,
+        LIMIT_EXCEPT,
+        AUTOINDEX,
+        CLIENT_MAX_BODY_SIZE,
+        RETURN,
+        ERROR_PAGE,
+    };
 
     /// Used for validation
     struct Constraint
     {
-        using Constraints = std::map<std::string, Constraint>;
-
-        Keys children = {};
-        bool unique   = false;
+        std::vector<Type> parents = {};
+        bool              unique  = false;
 
         std::optional<size_t> min_params = std::nullopt;
         std::optional<size_t> max_params = std::nullopt;
@@ -28,22 +45,24 @@ public:
         Parameters allowed_params = {};
     };
 
-    Directive();
-    Directive(const std::string& name, const Keys& parameters, const Directives& children);
+    Directive(Type type, Directive* parent = nullptr);
 
-    const std::string& get_name() const;
-    const Parameters&  get_parameters() const;
-    const Directives&  get_children() const;
+    Type get_type() const;
 
-    /// Validate the directive based certain constraints
-    ///
-    /// @param parent The parent directive
-    /// @param siblings The siblings of the directive
-    void validate(const std::string& parent, const Directives& siblings) const;
+    const Parameters& get_parameters() const;
+    const Directives& get_children() const;
+    const Directive*  get_parent() const;
+
+    void add_parameter(const Value& value);
+    void add_child(const Directive& child);
+
+    static const std::map<std::string, Directive::Type> TYPE_MAP;
+    static const Constraint                             CONSTRAINTS[];
 
 private:
-    std::string _name;
-    Parameters  _parameters;
-    Directives  _children;
+    Type       _type;
+    Parameters _parameters;
+    Directives _children;
+    Directive* _parent;
 };
 }  // namespace webserv::config

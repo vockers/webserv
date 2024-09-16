@@ -30,6 +30,6 @@ private:
     /// @param parent_directive The parent directive
     ///
     /// @return The parsed directive
-    Directive parse_directive(const Directive::Directives& siblings, const std::string& parent);
+    Directive parse_directive(const Directive::Directives& siblings, Directive* parent);
 };
 }  // namespace webserv::config
