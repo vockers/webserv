@@ -83,14 +83,14 @@ const Directive* Directive::operator[](Type type) const
     return nullptr;
 }
 
-const std::string& Directive::get_name() const
-{
-    return _name;
-}
-
 Type Directive::get_type() const
 {
     return _type;
+}
+
+const std::string& Directive::get_name() const
+{
+    return _name;
 }
 
 const Directive::Parameters& Directive::get_parameters() const

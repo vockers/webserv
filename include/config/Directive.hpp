@@ -49,8 +49,21 @@ public:
 
     Directive(const std::string& name, Type type, Directive* parent = nullptr);
 
+    /// @brief Get the directive of a specific type
+    ///
+    /// Searches for a directive of the specified type in the children of this directive.
+    /// If it doesn't exist, it will search in the parent of this directive, and so on.
+    ///
+    /// @param type The type of the directive
+    /// @return The directive of the specified type or `nullptr` if it doesn't exist
     const Directive* operator[](Type type) const;
 
+    /// @brief Get the value of a directive as `T`
+    ///
+    /// @tparam T The type of the value
+    /// @param type The type of the directive
+    /// @param col The index of the parameter
+    /// @return The value of the directive as `T`
     template <typename T>
     const T& get(Type type, size_t col) const
     {
@@ -70,8 +83,8 @@ public:
         return std::get<T>(directive->get_parameters()[col]);
     }
 
-    const std::string& get_name() const;
     Type               get_type() const;
+    const std::string& get_name() const;
     const Parameters&  get_parameters() const;
     const Directives&  get_children() const;
     const Directive*   get_parent() const;

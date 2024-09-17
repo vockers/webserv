@@ -9,6 +9,8 @@ TEST(ConfigTests, ConfigTest)
 {
     Config config("tests/conf/test.conf");
 
+    EXPECT_EQ(config.get<std::string>(Type::LOG_LEVEL, 0), "crit");
+
     const Directive& main = config.get_main_directive();
 
     EXPECT_EQ(main.get_type(), Type::MAIN);

@@ -27,12 +27,14 @@ private:
     /// @return The token
     Token take_token(Token::Type type);
 
+    /// @brief Parse a directive's parameters
+    ///
+    /// @param directive The directive
     void parse_parameters(Directive& directive);
 
-    /// Recursively parse a directive
+    /// @brief Recursively parse a directive
     ///
     /// @param parent_directive The parent directive
-    ///
     /// @return The parsed directive
     std::shared_ptr<Directive> parse_directive(Directive* parent);
 };
