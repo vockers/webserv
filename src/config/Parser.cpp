@@ -16,7 +16,7 @@ Parser::Parser(const std::string& input) : _lexer(input)
 
 Directive Parser::parse()
 {
-    Directive main(Type::MAIN);
+    Directive main("", Type::MAIN);
 
     while (_next_token.type != Token::Type::NONE) {
         main.add_child(this->parse_directive(main.get_children(), &main));
@@ -41,6 +41,27 @@ Parser::Token Parser::take_token(Token::Type type)
     return token;
 }
 
+void Parser::parse_parameters(Directive& directive)
+{
+    while (_next_token.type == Token::Type::WORD) {
+        directive.add_parameter(*this->take_token(_next_token.type).value);
+    }
+
+    const auto& constraint = Directive::get_constraint(directive.get_type());
+
+    // Check if the directive has the correct number of parameters
+    if (constraint.min_params.has_value() &&
+        directive.get_parameters().size() < *constraint.min_params) {
+        throw std::runtime_error("directive '" + directive.get_name() + "' requires at least " +
+                                 std::to_string(*constraint.min_params) + " parameters");
+    }
+    if (constraint.max_params.has_value() &&
+        directive.get_parameters().size() > *constraint.max_params) {
+        throw std::runtime_error("Directive '" + directive.get_name() + "' requires at most " +
+                                 std::to_string(*constraint.max_params) + " parameters");
+    }
+}
+
 Directive Parser::parse_directive(const Directive::Directives& siblings, Directive* parent)
 {
     std::string name = *this->take_token(Token::Type::WORD).value;
@@ -50,28 +71,13 @@ Directive Parser::parse_directive(const Directive::Directives& siblings, Directi
     if (it == Directive::TYPE_MAP.end()) {
         throw std::runtime_error("Unknown directive: " + name);
     }
-    Directive directive(it->second, parent);
+    Directive directive(name, it->second, parent);
 
     // Check if the directive is allowed in the parent directive
-    const auto& constraint = Directive::CONSTRAINTS[static_cast<int>(directive.get_type())];
+    const auto& constraint = Directive::get_constraint(directive.get_type());
     if (!utils::contains(constraint.parents, parent->get_type())) {
-        throw std::runtime_error("Directive '" + name + "' is not allowed in this context");
-    }
-
-    while (_next_token.type == Token::Type::WORD) {
-        directive.add_parameter(*this->take_token(Token::Type::WORD).value);
-    }
-
-    // Check if the directive has the correct number of parameters
-    if (constraint.min_params.has_value() &&
-        directive.get_parameters().size() < *constraint.min_params) {
-        throw std::runtime_error("directive '" + name + "' requires at least " +
-                                 std::to_string(*constraint.min_params) + " parameters");
-    }
-    if (constraint.max_params.has_value() &&
-        directive.get_parameters().size() > *constraint.max_params) {
-        throw std::runtime_error("Directive '" + name + "' requires at most " +
-                                 std::to_string(*constraint.max_params) + " parameters");
+        throw std::runtime_error("Directive '" + name + "' is not allowed in directive '" +
+                                 parent->get_name() + "'");
     }
 
     // Check if the directive is unique
@@ -82,6 +88,8 @@ Directive Parser::parse_directive(const Directive::Directives& siblings, Directi
             }
         }
     }
+
+    this->parse_parameters(directive);
 
     if (_next_token.type == Token::Type::BLOCK_START) {
         this->take_token(Token::Type::BLOCK_START);

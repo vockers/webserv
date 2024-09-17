@@ -25,6 +25,8 @@ private:
     /// @return The token
     Token take_token(Token::Type type);
 
+    void parse_parameters(Directive& directive);
+
     /// Recursively parse a directive
     ///
     /// @param parent_directive The parent directive

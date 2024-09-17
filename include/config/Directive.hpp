@@ -11,7 +11,7 @@ namespace webserv::config
 class Directive
 {
 public:
-    using Value      = std::variant<std::string, int>;
+    using Value      = std::variant<std::string, int, bool>;
     using Parameters = std::vector<Value>;
     using Directives = std::vector<Directive>;
 
@@ -45,24 +45,30 @@ public:
         Parameters allowed_params = {};
     };
 
-    Directive(Type type, Directive* parent = nullptr);
+    Directive(const std::string& name, Type type, Directive* parent = nullptr);
 
-    Type get_type() const;
-
-    const Parameters& get_parameters() const;
-    const Directives& get_children() const;
-    const Directive*  get_parent() const;
+    const std::string& get_name() const;
+    Type               get_type() const;
+    const Parameters&  get_parameters() const;
+    const Parameters&  get_parameters(Type type) const;
+    const Directives&  get_children() const;
+    const Directive*   get_parent() const;
 
     void add_parameter(const Value& value);
     void add_child(const Directive& child);
 
-    static const std::map<std::string, Directive::Type> TYPE_MAP;
-    static const Constraint                             CONSTRAINTS[];
+    static const std::map<std::string, Type> TYPE_MAP;
+    static const Constraint                  CONSTRAINTS[];
+    static const Parameters                  DEFAULT_PARAMS[];
+
+    static const Constraint& get_constraint(Type type);
+    static const Parameters& get_default_params(Type type);
 
 private:
-    Type       _type;
-    Parameters _parameters;
-    Directives _children;
-    Directive* _parent;
+    std::string _name;
+    Type        _type;
+    Parameters  _parameters;
+    Directives  _children;
+    Directive*  _parent;
 };
 }  // namespace webserv::config
