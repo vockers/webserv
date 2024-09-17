@@ -51,4 +51,24 @@ void ErrorLogger::log(ErrorLogger::Level level, const std::string& message)
     buffer << Color::RESET << ": " << message << std::endl;
     _stream << buffer.str();
 }
+
+void ErrorLogger::set_level(ErrorLogger::Level level)
+{
+    _level = level;
+}
+
+void ErrorLogger::set_level(const std::string& level)
+{
+    if (level == "debug") {
+        _level = Level::DEBUG;
+    } else if (level == "info") {
+        _level = Level::INFO;
+    } else if (level == "warn") {
+        _level = Level::WARNING;
+    } else if (level == "error") {
+        _level = Level::ERROR;
+    } else if (level == "crit") {
+        _level = Level::CRITICAL;
+    }
+}
 }  // namespace webserv::utils
