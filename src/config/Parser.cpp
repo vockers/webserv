@@ -1,9 +1,15 @@
 #include "config/Parser.hpp"
 
+#include <memory>
 #include <stdexcept>
+
+#include "config/Directive.hpp"
+#include "utils/std_utils.hpp"
 
 namespace webserv::config
 {
+using Type = Directive::Type;
+
 Parser::Parser(const std::string& input) : _lexer(input)
 {
     _next_token = _lexer.next_token();
@@ -11,13 +17,13 @@ Parser::Parser(const std::string& input) : _lexer(input)
 
 Directive Parser::parse()
 {
-    Directive::Directives children;
+    Directive main("", Type::MAIN);
 
     while (_next_token.type != Token::Type::NONE) {
-        children.push_back(this->parse_directive(children, ""));
+        main.add_child(this->parse_directive(&main));
     }
 
-    return Directive("", {}, children);
+    return main;
 }
 
 Parser::Token Parser::take_token(Token::Type type)
@@ -36,35 +42,68 @@ Parser::Token Parser::take_token(Token::Type type)
     return token;
 }
 
-Directive Parser::parse_directive(const Directive::Directives& siblings, const std::string& parent)
+void Parser::parse_parameters(Directive& directive)
 {
-    std::string           name;
-    Directive::Keys       parameters;
-    Directive::Directives children;
+    while (_next_token.type == Token::Type::STRING || _next_token.type == Token::Type::NUMBER ||
+           _next_token.type == Token::Type::BOOL) {
+        directive.add_parameter(*this->take_token(_next_token.type).value);
+    }
 
-    if (_next_token.type == Token::Type::WORD) {
-        name = *_next_token.value;
-        this->take_token(Token::Type::WORD);
-    } else {
-        throw std::runtime_error("Expected 'word' token");
+    const auto& constraint = Directive::get_constraint(directive.get_type());
+
+    // Check if the directive has the correct number of parameters
+    if (constraint.min_params.has_value() &&
+        directive.get_parameters().size() < *constraint.min_params) {
+        throw std::runtime_error("directive '" + directive.get_name() + "' requires at least " +
+                                 std::to_string(*constraint.min_params) + " parameters");
     }
-    while (_next_token.type == Token::Type::WORD) {
-        parameters.push_back(*this->take_token(Token::Type::WORD).value);
+    if (constraint.max_params.has_value() &&
+        directive.get_parameters().size() > *constraint.max_params) {
+        throw std::runtime_error("Directive '" + directive.get_name() + "' requires at most " +
+                                 std::to_string(*constraint.max_params) + " parameters");
     }
+}
+
+std::shared_ptr<Directive> Parser::parse_directive(Directive* parent)
+{
+    std::string name = this->take_token(Token::Type::STRING).get<std::string>();
+
+    // Check if the directive is known
+    auto it = Directive::TYPE_MAP.find(name);
+    if (it == Directive::TYPE_MAP.end()) {
+        throw std::runtime_error("Unknown directive: " + name);
+    }
+    std::shared_ptr<Directive> directive(std::make_shared<Directive>(name, it->second, parent));
+
+    // Check if the directive is allowed in the parent directive
+    const auto& constraint = Directive::get_constraint(directive->get_type());
+    if (!utils::contains(constraint.parents, parent->get_type())) {
+        throw std::runtime_error("Directive '" + name + "' is not allowed in directive '" +
+                                 parent->get_name() + "'");
+    }
+
+    // Check if the directive is unique
+    if (constraint.unique) {
+        for (const auto& d : parent->get_children()) {
+            if (d->get_type() == directive->get_type()) {
+                throw std::runtime_error("Directive '" + name + "' is not unique in this context");
+            }
+        }
+    }
+
+    this->parse_parameters(*directive);
 
     if (_next_token.type == Token::Type::BLOCK_START) {
         this->take_token(Token::Type::BLOCK_START);
 
         while (_next_token.type != Token::Type::BLOCK_END) {
-            children.push_back(parse_directive(children, name));
+            directive->add_child(parse_directive(directive.get()));
         }
         this->take_token(Token::Type::BLOCK_END);
     } else {
         this->take_token(Token::Type::END);
     }
 
-    Directive directive(name, parameters, children);
-    directive.validate(parent, siblings);
     return directive;
 }
 }  // namespace webserv::config

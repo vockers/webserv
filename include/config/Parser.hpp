@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include "config/Directive.hpp"
 #include "config/Lexer.hpp"
 
@@ -25,11 +27,15 @@ private:
     /// @return The token
     Token take_token(Token::Type type);
 
-    /// Recursively parse a directive
+    /// @brief Parse a directive's parameters
+    ///
+    /// @param directive The directive
+    void parse_parameters(Directive& directive);
+
+    /// @brief Recursively parse a directive
     ///
     /// @param parent_directive The parent directive
-    ///
     /// @return The parsed directive
-    Directive parse_directive(const Directive::Directives& siblings, const std::string& parent);
+    std::shared_ptr<Directive> parse_directive(Directive* parent);
 };
 }  // namespace webserv::config
