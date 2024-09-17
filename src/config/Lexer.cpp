@@ -7,8 +7,14 @@ using Token = Lexer::Token;
 const std::string Token::type_to_string(Token::Type type)
 {
     switch (type) {
-    case Token::Type::WORD:
+    case Token::Type::STRING:
         return "string";
+        break;
+    case Token::Type::NUMBER:
+        return "number";
+        break;
+    case Token::Type::BOOL:
+        return "bool";
         break;
     case Token::Type::END:
         return ";";
@@ -46,13 +52,27 @@ Token Lexer::next_token()
         ++_current;
         return {Token::Type::BLOCK_END, {}};
     default:
-        std::string word;
-        while (_current != _input.end() && !is_delimiter(*_current)) {
-            word += *_current;
-            ++_current;
-        }
-        return {Token::Type::WORD, word};
+        return scan_word();
     }
+}
+
+Token Lexer::scan_word()
+{
+    std::string word;
+    Token::Type type = Token::Type::NUMBER;
+    while (_current != _input.end() && !is_delimiter(*_current)) {
+        if (!std::isdigit(*_current)) {
+            type = Token::Type::STRING;
+        }
+        word += *_current;
+        ++_current;
+    }
+    if (type == Token::Type::NUMBER) {
+        return {Token::Type::NUMBER, std::stoi(word)};
+    } else if (word == "on" || word == "off") {
+        return {Token::Type::BOOL, word == "on" ? true : false};
+    }
+    return {Token::Type::STRING, word};
 }
 
 void Lexer::skip_whitespaces()

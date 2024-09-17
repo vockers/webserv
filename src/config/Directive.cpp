@@ -1,5 +1,6 @@
 #include "config/Directive.hpp"
 
+#include <memory>
 #include <optional>
 
 using std::nullopt;
@@ -67,6 +68,21 @@ Directive::Directive(const std::string& name, Type type, Directive* parent)
 {
 }
 
+const Directive* Directive::operator[](Type type) const
+{
+    for (const auto& child : _children) {
+        if (child->get_type() == type) {
+            return child.get();
+        }
+    }
+
+    if (_parent) {
+        return (*_parent)[type];
+    }
+
+    return nullptr;
+}
+
 const std::string& Directive::get_name() const
 {
     return _name;
@@ -80,21 +96,6 @@ Type Directive::get_type() const
 const Directive::Parameters& Directive::get_parameters() const
 {
     return _parameters;
-}
-
-const Directive::Parameters& Directive::get_parameters(Type type) const
-{
-    for (const auto& child : _children) {
-        if (child.get_type() == type) {
-            return child.get_parameters();
-        }
-    }
-
-    if (_parent) {
-        return _parent->get_parameters(type);
-    }
-
-    return get_default_params(type);
 }
 
 const Directive::Directives& Directive::get_children() const
@@ -112,7 +113,7 @@ void Directive::add_parameter(const Value& value)
     _parameters.push_back(value);
 }
 
-void Directive::add_child(const Directive& child)
+void Directive::add_child(std::shared_ptr<Directive> child)
 {
     _children.push_back(child);
 }

@@ -1,7 +1,9 @@
 #pragma once
 
 #include <map>
+#include <memory>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <variant>
 #include <vector>
@@ -13,7 +15,7 @@ class Directive
 public:
     using Value      = std::variant<std::string, int, bool>;
     using Parameters = std::vector<Value>;
-    using Directives = std::vector<Directive>;
+    using Directives = std::vector<std::shared_ptr<Directive>>;
 
     enum Type : int
     {
@@ -47,15 +49,35 @@ public:
 
     Directive(const std::string& name, Type type, Directive* parent = nullptr);
 
+    const Directive* operator[](Type type) const;
+
+    template <typename T>
+    const T& get(Type type, size_t col) const
+    {
+        const Directive* directive = (*this)[type];
+
+        if (directive == nullptr) {
+            if (get_default_params(type).size() <= col) {
+                throw std::runtime_error("No default value for this directive");
+            }
+            return std::get<T>(get_default_params(type)[col]);
+        }
+
+        if (directive->get_parameters().size() <= col) {
+            throw std::runtime_error("No value for this directive");
+        }
+
+        return std::get<T>(directive->get_parameters()[col]);
+    }
+
     const std::string& get_name() const;
     Type               get_type() const;
     const Parameters&  get_parameters() const;
-    const Parameters&  get_parameters(Type type) const;
     const Directives&  get_children() const;
     const Directive*   get_parent() const;
 
     void add_parameter(const Value& value);
-    void add_child(const Directive& child);
+    void add_child(std::shared_ptr<Directive> child);
 
     static const std::map<std::string, Type> TYPE_MAP;
     static const Constraint                  CONSTRAINTS[];
