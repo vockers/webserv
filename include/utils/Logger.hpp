@@ -30,7 +30,7 @@ public:
     ErrorLogger(Level level);
 
     void log(Level level, const std::string& message);
-    
+
     void set_level(Level level);
     void set_level(const std::string& level);
 

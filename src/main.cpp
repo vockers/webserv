@@ -13,7 +13,7 @@ int main()
 
     try {
         Config config("conf/default.conf");
-        
+
         elog.set_level(config.get<std::string>(Directive::LOG_LEVEL, 0));
 
         elog.log(ErrorLogger::INFO, "Starting webserv...");
