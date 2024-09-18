@@ -1,8 +1,10 @@
 #pragma once
 
+#include <memory>
 #include <string>
 #include <vector>
 
+#include "server/EventHandler.hpp"
 #include "server/Listen.hpp"
 #include "utils/Logger.hpp"
 
@@ -14,6 +16,8 @@ using utils::ErrorLogger;
 class Server
 {
 public:
+    using Events = std::vector<std::unique_ptr<EventHandler>>;
+
     Server(const std::string& name, const std::string& address, int port, ErrorLogger& elog);
     ~Server();
 
@@ -27,5 +31,8 @@ private:
     ErrorLogger& _elog;
 
     std::vector<Socket> _sockets;
+    Events              _events;
+
+    void accept();
 };
 }  // namespace webserv::server
