@@ -7,7 +7,7 @@
 
 namespace webserv::config
 {
-Config::Config(const std::string& file_path) : _main_directive("", Directive::Type::MAIN)
+Config::Config(const std::string& file_path) : Directive("", Directive::Type::MAIN)
 {
     std::ifstream file(file_path);
     if (!file.is_open()) {
@@ -18,11 +18,6 @@ Config::Config(const std::string& file_path) : _main_directive("", Directive::Ty
     buffer << file.rdbuf();
 
     Parser parser(buffer.str());
-    _main_directive = parser.parse();
-}
-
-const Directive& Config::get_main_directive() const
-{
-    return _main_directive;
+    *this = parser.parse();
 }
 }  // namespace webserv::config

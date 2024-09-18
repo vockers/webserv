@@ -99,7 +99,7 @@ public:
     static const Constraint& get_constraint(Type type);
     static const Parameters& get_default_params(Type type);
 
-private:
+protected:
     std::string _name;
     Type        _type;
     Parameters  _parameters;
