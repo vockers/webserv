@@ -29,7 +29,7 @@ Server::Server(const std::string& name, const std::string& address, int port, Er
     }
 
     auto event_handler     = std::make_unique<EventHandler>();
-    event_handler->on_read = std::bind(&Server::accept, this);
+    event_handler->handle_read = std::bind(&Server::accept, this);
 
     // Add the listen socket to the epoll instance.
     epoll_event event;
@@ -62,10 +62,10 @@ void Server::run()
             const EventHandler* handler = static_cast<EventHandler*>(events[i].data.ptr);
 
             if (events[i].events & EPOLLIN) {
-                handler->on_read();
+                handler->handle_read();
             }
             if (events[i].events & EPOLLOUT) {
-                handler->on_write();
+                handler->handle_write();
             }
         }
     }
@@ -73,8 +73,27 @@ void Server::run()
 
 void Server::accept()
 {
-    Socket client = _listen.accept();
-    _sockets.emplace_back(std::move(client));
-    _elog.log(ErrorLogger::INFO, "Accepted connection from " + client.get_address().to_string());
+    Socket socket = _listen.accept();
+    _clients.emplace_back(std::move(socket));
+
+    Client& client = _clients.back();
+
+    auto event_handler     = std::make_unique<EventHandler>();
+    event_handler->handle_read = std::bind(&Client::handle_read, &client);
+    event_handler->handle_write = std::bind(&Client::handle_write, &client);
+
+    // Add the listen socket to the epoll instance.
+    epoll_event event;
+    event.events   = EPOLLIN | EPOLLOUT | EPOLLET;
+    event.data.fd  = client.get_fd();
+    event.data.ptr = event_handler.get();
+    if (epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, client.get_fd(), &event) == -1) {
+        _events.pop_back();
+        throw std::runtime_error("Failed to add client socket with fd: " + std::to_string(socket.get_fd()) + " to epoll");
+    }
+
+    _events.push_back(std::move(event_handler));
+
+    _elog.log(ErrorLogger::INFO, "Accepted connection from " + socket.get_address().to_string());
 }
 }  // namespace webserv::server

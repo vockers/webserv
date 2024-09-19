@@ -1,18 +1,20 @@
 #pragma once
 
+#include <sstream>
+
 #include "server/Socket.hpp"
 
 namespace webserv::server
 {
-class Client
+class Client : public Socket
 {
 public:
 	Client(Socket&& socket);
 
-	void on_read();
-	void on_write();
+	void handle_read();
+	void handle_write();
 
 private:
-	Socket _socket;
+	std::stringstream _buffer;
 };
 }  // namespace webserv::server
