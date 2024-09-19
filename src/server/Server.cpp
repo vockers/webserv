@@ -4,8 +4,10 @@
 #include <sys/epoll.h>
 #include <unistd.h>
 
+#include <memory>
 #include <stdexcept>
 
+#include "server/EventHandler.hpp"
 #include "utils/Logger.hpp"
 
 namespace webserv::server
@@ -26,12 +28,20 @@ Server::Server(const std::string& name, const std::string& address, int port, Er
         throw std::runtime_error("Failed to set FD_CLOEXEC on epoll instance");
     }
 
+    auto event_handler     = std::make_unique<EventHandler>();
+    event_handler->on_read = std::bind(&Server::accept, this);
+
+    // Add the listen socket to the epoll instance.
     epoll_event event;
-    event.events  = EPOLLIN;
-    event.data.fd = _listen.get_fd();
+    event.events   = EPOLLIN;
+    event.data.fd  = _listen.get_fd();
+    event.data.ptr = event_handler.get();
     if (epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, _listen.get_fd(), &event) == -1) {
+        _events.pop_back();
         throw std::runtime_error("Failed to add listen socket to epoll");
     }
+
+    _events.push_back(std::move(event_handler));
 }
 
 Server::~Server()
@@ -49,15 +59,22 @@ void Server::run()
         }
 
         for (int i = 0; i < num_events; i++) {
-            if (events[i].data.fd == _listen.get_fd()) {
-                Socket client = _listen.accept();
-                _sockets.push_back(std::move(client));
-                _elog.log(ErrorLogger::INFO,
-                          "Accepted connection from " + client.get_address().to_string());
-            } else {
-                // TODO: Handle client events
+            const EventHandler* handler = static_cast<EventHandler*>(events[i].data.ptr);
+
+            if (events[i].events & EPOLLIN) {
+                handler->on_read();
+            }
+            if (events[i].events & EPOLLOUT) {
+                handler->on_write();
             }
         }
     }
+}
+
+void Server::accept()
+{
+    Socket client = _listen.accept();
+    _sockets.emplace_back(std::move(client));
+    _elog.log(ErrorLogger::INFO, "Accepted connection from " + client.get_address().to_string());
 }
 }  // namespace webserv::server
