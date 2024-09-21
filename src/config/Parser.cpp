@@ -3,21 +3,21 @@
 #include <memory>
 #include <stdexcept>
 
-#include "config/Directive.hpp"
+#include "config/Config.hpp"
 #include "utils/std_utils.hpp"
 
 namespace webserv::config
 {
-using Type = Directive::Type;
+using Type = Config::Type;
 
 Parser::Parser(const std::string& input) : _lexer(input)
 {
     _next_token = _lexer.next_token();
 }
 
-Directive Parser::parse()
+Config Parser::parse()
 {
-    Directive main("", Type::MAIN);
+    Config main("", Type::MAIN);
 
     while (_next_token.type != Token::Type::NONE) {
         main.add_child(this->parse_directive(&main));
@@ -42,14 +42,14 @@ Parser::Token Parser::take_token(Token::Type type)
     return token;
 }
 
-void Parser::parse_parameters(Directive& directive)
+void Parser::parse_parameters(Config& directive)
 {
     while (_next_token.type == Token::Type::STRING || _next_token.type == Token::Type::NUMBER ||
            _next_token.type == Token::Type::BOOL) {
         directive.add_parameter(*this->take_token(_next_token.type).value);
     }
 
-    const auto& constraint = Directive::get_constraint(directive.get_type());
+    const auto& constraint = Config::get_constraint(directive.get_type());
 
     // Check if the directive has the correct number of parameters
     if (constraint.min_params.has_value() &&
@@ -64,19 +64,19 @@ void Parser::parse_parameters(Directive& directive)
     }
 }
 
-std::shared_ptr<Directive> Parser::parse_directive(Directive* parent)
+std::shared_ptr<Config> Parser::parse_directive(Config* parent)
 {
     std::string name = this->take_token(Token::Type::STRING).get<std::string>();
 
     // Check if the directive is known
-    auto it = Directive::TYPE_MAP.find(name);
-    if (it == Directive::TYPE_MAP.end()) {
+    auto it = Config::TYPE_MAP.find(name);
+    if (it == Config::TYPE_MAP.end()) {
         throw std::runtime_error("Unknown directive: " + name);
     }
-    std::shared_ptr<Directive> directive(std::make_shared<Directive>(name, it->second, parent));
+    std::shared_ptr<Config> directive(std::make_shared<Config>(name, it->second, parent));
 
     // Check if the directive is allowed in the parent directive
-    const auto& constraint = Directive::get_constraint(directive->get_type());
+    const auto& constraint = Config::get_constraint(directive->get_type());
     if (!utils::contains(constraint.parents, parent->get_type())) {
         throw std::runtime_error("Directive '" + name + "' is not allowed in directive '" +
                                  parent->get_name() + "'");

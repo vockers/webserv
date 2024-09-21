@@ -3,7 +3,7 @@
 #include "config/Parser.hpp"
 
 using namespace webserv::config;
-using Type = Directive::Type;
+using Type = Config::Type;
 
 TEST(ParserTests, ParseEmptyConfig)
 {
@@ -11,7 +11,7 @@ TEST(ParserTests, ParseEmptyConfig)
 
     auto config = parser.parse();
 
-    EXPECT_EQ(config.get_type(), Directive::MAIN);
+    EXPECT_EQ(config.get_type(), Config::MAIN);
     EXPECT_EQ(config.get_parameters().size(), 0);
     EXPECT_EQ(config.get_children().size(), 0);
 }
@@ -22,7 +22,7 @@ TEST(ParserTests, ParseSingleDirective)
 
     auto config = *parser.parse().get_children()[0];
 
-    EXPECT_EQ(config.get_type(), Directive::LOG_LEVEL);
+    EXPECT_EQ(config.get_type(), Config::LOG_LEVEL);
     EXPECT_EQ(config.get_parameters().size(), 1);
     EXPECT_EQ(std::get<std::string>(config.get_parameters()[0]), "debug");
     EXPECT_EQ(config.get_children().size(), 0);

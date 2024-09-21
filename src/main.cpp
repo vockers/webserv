@@ -3,7 +3,7 @@
 #include "utils/Logger.hpp"
 
 using webserv::config::Config;
-using webserv::config::Directive;
+using webserv::config::Config;
 using webserv::server::Server;
 using webserv::utils::ErrorLogger;
 
@@ -14,7 +14,7 @@ int main()
     try {
         Config config("conf/default.conf");
 
-        elog.set_level(config.get<std::string>(Directive::LOG_LEVEL, 0));
+        elog.set_level(config.get<std::string>(Config::LOG_LEVEL, 0));
 
         elog.log(ErrorLogger::INFO, "Starting webserv...");
 
