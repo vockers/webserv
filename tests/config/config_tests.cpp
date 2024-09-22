@@ -3,7 +3,7 @@
 #include "config/Config.hpp"
 
 using namespace webserv::config;
-using Type = Directive::Type;
+using Type = Config::Type;
 
 TEST(ConfigTests, ConfigTest)
 {
@@ -11,7 +11,7 @@ TEST(ConfigTests, ConfigTest)
 
     EXPECT_EQ(config.get<std::string>(Type::LOG_LEVEL, 0), "crit");
 
-    const Directive& main = config;
+    const Config& main = config;
 
     EXPECT_EQ(main.get_type(), Type::MAIN);
 
@@ -34,7 +34,7 @@ TEST(ConfigTests, DefaultValues)
 {
     Config config("tests/conf/test.conf");
 
-    const Directive& main = config;
+    const Config& main = config;
 
     EXPECT_EQ(main.get<int>(Type::CLIENT_MAX_BODY_SIZE, 0), 1048576);
     EXPECT_EQ(main.get<bool>(Type::AUTOINDEX, 0), false);
@@ -58,7 +58,7 @@ TEST(ConfigTests, ErrorHandling)
 
     Config config("tests/conf/test.conf");
 
-    const Directive& main = config;
+    const Config& main = config;
 
     auto& http = *main.get_children()[1];
     EXPECT_THROW(http.get<std::string>(Type::ERROR_PAGE, 0), std::runtime_error);

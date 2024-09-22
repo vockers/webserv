@@ -2,7 +2,7 @@
 
 #include <memory>
 
-#include "config/Directive.hpp"
+#include "config/Config.hpp"
 #include "config/Lexer.hpp"
 
 namespace webserv::config
@@ -14,7 +14,7 @@ public:
 
     Parser(const std::string& input);
 
-    Directive parse();
+    Config parse();
 
 private:
     Token _next_token;
@@ -30,12 +30,12 @@ private:
     /// @brief Parse a directive's parameters
     ///
     /// @param directive The directive
-    void parse_parameters(Directive& directive);
+    void parse_parameters(Config& directive);
 
     /// @brief Recursively parse a directive
     ///
     /// @param parent_directive The parent directive
     /// @return The parsed directive
-    std::shared_ptr<Directive> parse_directive(Directive* parent);
+    std::shared_ptr<Config> parse_directive(Config* parent);
 };
 }  // namespace webserv::config

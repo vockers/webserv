@@ -16,7 +16,6 @@ COPY ../. .
 # Compile the source code
 RUN clang++ -std=c++20 -I./include -o test \
     src/config/Config.cpp \
-    src/config/Directive.cpp \
     src/config/Lexer.cpp \
     src/config/Parser.cpp \
     tests/config/config_tests.cpp \
