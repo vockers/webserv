@@ -3,7 +3,6 @@
 #include "utils/Logger.hpp"
 
 using webserv::config::Config;
-using webserv::config::Config;
 using webserv::server::Server;
 using webserv::utils::ErrorLogger;
 

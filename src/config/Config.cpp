@@ -1,8 +1,8 @@
 #include "config/Config.hpp"
 
+#include <fstream>
 #include <memory>
 #include <optional>
-#include <fstream>
 #include <sstream>
 
 #include "config/Parser.hpp"

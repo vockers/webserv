@@ -32,40 +32,40 @@ TEST(ParserTests, ParseSingleDirectiveWithChildren)
 {
     Parser parser("http { root /www; }");
 
-    auto config = *parser.parse().get_children()[0];
+    auto http = *parser.parse().get_children()[0];
 
-    EXPECT_EQ(config.get_type(), Type::HTTP);
-    EXPECT_EQ(config.get_parameters().size(), 0);
-    EXPECT_EQ(config.get_children().size(), 1);
+    EXPECT_EQ(http.get_type(), Type::HTTP);
+    EXPECT_EQ(http.get_parameters().size(), 0);
+    EXPECT_EQ(http.get_children().size(), 1);
 
-    auto& child = *config.get_children()[0];
-    EXPECT_EQ(child.get_type(), Type::ROOT);
-    EXPECT_EQ(child.get_parameters().size(), 1);
-    EXPECT_EQ(std::get<std::string>(child.get_parameters()[0]), "/www");
-    EXPECT_EQ(child.get_children().size(), 0);
+    auto& root = *http.get_children()[0];
+    EXPECT_EQ(root.get_type(), Type::ROOT);
+    EXPECT_EQ(root.get_parameters().size(), 1);
+    EXPECT_EQ(std::get<std::string>(root.get_parameters()[0]), "/www");
+    EXPECT_EQ(root.get_children().size(), 0);
 }
 
 TEST(ParserTests, ParseSingleDirectiveWithMultipleChildren)
 {
     Parser parser("http { root /www; autoindex on; }");
 
-    auto config = *parser.parse().get_children()[0];
+    auto http = *parser.parse().get_children()[0];
 
-    EXPECT_EQ(config.get_type(), Type::HTTP);
-    EXPECT_EQ(config.get_parameters().size(), 0);
-    EXPECT_EQ(config.get_children().size(), 2);
+    EXPECT_EQ(http.get_type(), Type::HTTP);
+    EXPECT_EQ(http.get_parameters().size(), 0);
+    EXPECT_EQ(http.get_children().size(), 2);
 
-    auto& child_1 = *config.get_children()[0];
-    EXPECT_EQ(child_1.get_type(), Type::ROOT);
-    EXPECT_EQ(child_1.get_parameters().size(), 1);
-    EXPECT_EQ(std::get<std::string>(child_1.get_parameters()[0]), "/www");
-    EXPECT_EQ(child_1.get_children().size(), 0);
+    auto& root = *http.get_children()[0];
+    EXPECT_EQ(root.get_type(), Type::ROOT);
+    EXPECT_EQ(root.get_parameters().size(), 1);
+    EXPECT_EQ(std::get<std::string>(root.get_parameters()[0]), "/www");
+    EXPECT_EQ(root.get_children().size(), 0);
 
-    auto& child_2 = *config.get_children()[1];
-    EXPECT_EQ(child_2.get_type(), Type::AUTOINDEX);
-    EXPECT_EQ(child_2.get_parameters().size(), 1);
-    EXPECT_EQ(std::get<bool>(child_2.get_parameters()[0]), true);
-    EXPECT_EQ(child_2.get_children().size(), 0);
+    auto& autoindex = *http.get_children()[1];
+    EXPECT_EQ(autoindex.get_type(), Type::AUTOINDEX);
+    EXPECT_EQ(autoindex.get_parameters().size(), 1);
+    EXPECT_EQ(std::get<bool>(autoindex.get_parameters()[0]), true);
+    EXPECT_EQ(autoindex.get_children().size(), 0);
 }
 
 TEST(ParserTests, ParseMultipleDirectives)
@@ -78,70 +78,70 @@ TEST(ParserTests, ParseMultipleDirectives)
     EXPECT_EQ(config.get_parameters().size(), 0);
     EXPECT_EQ(config.get_children().size(), 2);
 
-    auto& child1 = *config.get_children()[0];
-    EXPECT_EQ(child1.get_type(), Type::LOG_LEVEL);
-    EXPECT_EQ(child1.get_parameters().size(), 1);
-    EXPECT_EQ(std::get<std::string>(child1.get_parameters()[0]), "debug");
-    EXPECT_EQ(child1.get_children().size(), 0);
+    auto& log_level = *config.get_children()[0];
+    EXPECT_EQ(log_level.get_type(), Type::LOG_LEVEL);
+    EXPECT_EQ(log_level.get_parameters().size(), 1);
+    EXPECT_EQ(std::get<std::string>(log_level.get_parameters()[0]), "debug");
+    EXPECT_EQ(log_level.get_children().size(), 0);
 
-    auto& child2 = *config.get_children()[1];
-    EXPECT_EQ(child2.get_type(), Type::HTTP);
-    EXPECT_EQ(child2.get_parameters().size(), 0);
-    EXPECT_EQ(child2.get_children().size(), 1);
+    auto& http = *config.get_children()[1];
+    EXPECT_EQ(http.get_type(), Type::HTTP);
+    EXPECT_EQ(http.get_parameters().size(), 0);
+    EXPECT_EQ(http.get_children().size(), 1);
 
-    auto& child3 = *child2.get_children()[0];
-    EXPECT_EQ(child3.get_type(), Type::ROOT);
-    EXPECT_EQ(child3.get_parameters().size(), 1);
-    EXPECT_EQ(std::get<std::string>(child3.get_parameters()[0]), "/www");
-    EXPECT_EQ(child3.get_children().size(), 0);
+    auto& root = *http.get_children()[0];
+    EXPECT_EQ(root.get_type(), Type::ROOT);
+    EXPECT_EQ(root.get_parameters().size(), 1);
+    EXPECT_EQ(std::get<std::string>(root.get_parameters()[0]), "/www");
+    EXPECT_EQ(root.get_children().size(), 0);
 }
 
 TEST(ParserTests, ParseNestedDirectives)
 {
     Parser parser("http { server { listen 80; } }");
 
-    auto config = *parser.parse().get_children()[0];
+    auto http = *parser.parse().get_children()[0];
 
-    EXPECT_EQ(config.get_type(), Type::HTTP);
-    EXPECT_EQ(config.get_parameters().size(), 0);
-    EXPECT_EQ(config.get_children().size(), 1);
+    EXPECT_EQ(http.get_type(), Type::HTTP);
+    EXPECT_EQ(http.get_parameters().size(), 0);
+    EXPECT_EQ(http.get_children().size(), 1);
 
-    auto& child1 = *config.get_children()[0];
-    EXPECT_EQ(child1.get_type(), Type::SERVER);
-    EXPECT_EQ(child1.get_parameters().size(), 0);
-    EXPECT_EQ(child1.get_children().size(), 1);
+    auto& server = *http.get_children()[0];
+    EXPECT_EQ(server.get_type(), Type::SERVER);
+    EXPECT_EQ(server.get_parameters().size(), 0);
+    EXPECT_EQ(server.get_children().size(), 1);
 
-    auto& child2 = *child1.get_children()[0];
-    EXPECT_EQ(child2.get_type(), Type::LISTEN);
-    EXPECT_EQ(child2.get_parameters().size(), 1);
-    EXPECT_EQ(std::get<int>(child2.get_parameters()[0]), 80);
-    EXPECT_EQ(child2.get_children().size(), 0);
+    auto& listen = *server.get_children()[0];
+    EXPECT_EQ(listen.get_type(), Type::LISTEN);
+    EXPECT_EQ(listen.get_parameters().size(), 1);
+    EXPECT_EQ(std::get<int>(listen.get_parameters()[0]), 80);
+    EXPECT_EQ(listen.get_children().size(), 0);
 }
 
 TEST(ParserTests, ParseSameDirectives)
 {
     Parser parser("http { server { listen 80; listen 443; } }");
 
-    auto config = *parser.parse().get_children()[0];
+    auto http = *parser.parse().get_children()[0];
 
-    EXPECT_EQ(config.get_type(), Type::HTTP);
-    EXPECT_EQ(config.get_parameters().size(), 0);
-    EXPECT_EQ(config.get_children().size(), 1);
+    EXPECT_EQ(http.get_type(), Type::HTTP);
+    EXPECT_EQ(http.get_parameters().size(), 0);
+    EXPECT_EQ(http.get_children().size(), 1);
 
-    auto& child1 = *config.get_children()[0];
-    EXPECT_EQ(child1.get_type(), Type::SERVER);
-    EXPECT_EQ(child1.get_parameters().size(), 0);
-    EXPECT_EQ(child1.get_children().size(), 2);
+    auto& server = *http.get_children()[0];
+    EXPECT_EQ(server.get_type(), Type::SERVER);
+    EXPECT_EQ(server.get_parameters().size(), 0);
+    EXPECT_EQ(server.get_children().size(), 2);
 
-    auto& child2 = *child1.get_children()[0];
-    EXPECT_EQ(child2.get_type(), Type::LISTEN);
-    EXPECT_EQ(child2.get_parameters().size(), 1);
-    EXPECT_EQ(std::get<int>(child2.get_parameters()[0]), 80);
+    auto& listen = *server.get_children()[0];
+    EXPECT_EQ(listen.get_type(), Type::LISTEN);
+    EXPECT_EQ(listen.get_parameters().size(), 1);
+    EXPECT_EQ(std::get<int>(listen.get_parameters()[0]), 80);
 
-    auto& child3 = *child1.get_children()[1];
-    EXPECT_EQ(child3.get_type(), Type::LISTEN);
-    EXPECT_EQ(child3.get_parameters().size(), 1);
-    EXPECT_EQ(std::get<int>(child3.get_parameters()[0]), 443);
+    auto& listen2 = *server.get_children()[1];
+    EXPECT_EQ(listen2.get_type(), Type::LISTEN);
+    EXPECT_EQ(listen2.get_parameters().size(), 1);
+    EXPECT_EQ(std::get<int>(listen2.get_parameters()[0]), 443);
 }
 
 ////////////////////////////////////////
