@@ -74,9 +74,9 @@ void Server::run()
 void Server::accept()
 {
     Socket socket = _listen.accept();
-    _clients.emplace_back(std::move(socket));
+	_clients.emplace_back(std::make_unique<Client>(std::move(socket)));
 
-    Client& client = _clients.back();
+    Client& client = *(_clients.back());
 
     auto event_handler     = std::make_unique<EventHandler>();
     event_handler->handle_read = std::bind(&Client::handle_read, &client);

@@ -31,7 +31,7 @@ private:
     int          _epoll_fd;
     ErrorLogger& _elog;
 
-    std::vector<Client> _clients;
+    std::vector<std::unique_ptr<Client>> _clients;
     Events              _events;
 
     void accept();
