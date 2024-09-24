@@ -19,14 +19,19 @@ public:
 
     Request(const std::string& input);
 
+    Method             get_method() const;
+    const std::string& get_uri() const;
+    const Headers&     get_headers() const;
+
 private:
     using MethodMap = std::unordered_map<std::string, Method>;
 
-    Method  _method;
-    Headers _headers;
+    Method      _method;
+    std::string _uri;
+    Headers     _headers;
 
-    void parse_line(const std::string& input);
-    void parse_headers(const std::string& input);
+    void parse_line(const std::string& line);
+    void parse_headers(const std::string& headers);
 
     static const MethodMap METHOD_MAP;
 };
