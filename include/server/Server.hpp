@@ -4,10 +4,10 @@
 #include <string>
 #include <vector>
 
+#include "server/Client.hpp"
 #include "server/EventHandler.hpp"
 #include "server/Listen.hpp"
 #include "utils/Logger.hpp"
-#include "server/Client.hpp"
 
 namespace webserv::server
 {
@@ -32,7 +32,7 @@ private:
     ErrorLogger& _elog;
 
     std::vector<std::unique_ptr<Client>> _clients;
-    Events              _events;
+    Events                               _events;
 
     void accept();
 };

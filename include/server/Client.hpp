@@ -3,18 +3,23 @@
 #include <sstream>
 
 #include "server/Socket.hpp"
+#include "utils/Logger.hpp"
 
 namespace webserv::server
 {
+using webserv::utils::ErrorLogger;
+
 class Client : public Socket
 {
 public:
-	Client(Socket&& socket);
+    Client(Socket&& socket, ErrorLogger& elog);
+    ~Client();
 
-	void handle_read();
-	void handle_write();
+    void handle_read();
+    void handle_write();
 
 private:
-	std::stringstream _buffer;
+    std::stringstream _buffer;
+    ErrorLogger&      _elog;
 };
 }  // namespace webserv::server

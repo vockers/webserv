@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <sys/socket.h>
 
+#include <iostream>
 #include <stdexcept>
 
 namespace webserv::server
@@ -26,7 +27,6 @@ Socket Listen::accept()
     if (fcntl(fd, F_SETFL, O_NONBLOCK) == -1) {
         throw std::runtime_error("Failed to set O_NONBLOCK on accepted socket");
     }
-
     return Socket(Address(accepted_addr), fd);
 }
 }  // namespace webserv::server
