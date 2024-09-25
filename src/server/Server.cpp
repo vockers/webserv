@@ -4,6 +4,7 @@
 #include <sys/epoll.h>
 #include <unistd.h>
 
+#include <iostream>
 #include <memory>
 #include <stdexcept>
 
@@ -28,16 +29,15 @@ Server::Server(const std::string& name, const std::string& address, int port, Er
         throw std::runtime_error("Failed to set FD_CLOEXEC on epoll instance");
     }
 
-    auto event_handler     = std::make_unique<EventHandler>();
-    event_handler->on_read = std::bind(&Server::accept, this);
+    auto event_handler         = std::make_unique<EventHandler>();
+    event_handler->handle_read = std::bind(&Server::accept, this);
+    event_handler->fd          = _listen.get_fd();
 
     // Add the listen socket to the epoll instance.
     epoll_event event;
     event.events   = EPOLLIN;
-    event.data.fd  = _listen.get_fd();
     event.data.ptr = event_handler.get();
     if (epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, _listen.get_fd(), &event) == -1) {
-        _events.pop_back();
         throw std::runtime_error("Failed to add listen socket to epoll");
     }
 
@@ -60,12 +60,19 @@ void Server::run()
 
         for (int i = 0; i < num_events; i++) {
             const EventHandler* handler = static_cast<EventHandler*>(events[i].data.ptr);
+            if (handler->fd == _listen.get_fd()) {
+                handler->handle_read();
+            } else if (events[i].events & EPOLLIN) {
+                handler->handle_read();
 
-            if (events[i].events & EPOLLIN) {
-                handler->on_read();
-            }
-            if (events[i].events & EPOLLOUT) {
-                handler->on_write();
+                epoll_event event;
+                event.data   = events[i].data;
+                event.events = EPOLLOUT | EPOLLET;
+                if (epoll_ctl(_epoll_fd, EPOLL_CTL_MOD, handler->fd, &event) == -1) {
+                    throw std::runtime_error("Failed to modify epoll event to EPOLLOUT");
+                }
+            } else if (events[i].events & EPOLLOUT) {
+                handler->handle_write();
             }
         }
     }
@@ -73,8 +80,27 @@ void Server::run()
 
 void Server::accept()
 {
-    Socket client = _listen.accept();
-    _sockets.emplace_back(std::move(client));
-    _elog.log(ErrorLogger::INFO, "Accepted connection from " + client.get_address().to_string());
+    Socket socket = _listen.accept();
+    _clients.emplace_back(std::make_unique<Client>(std::move(socket), _elog));
+
+    Client& client = *(_clients.back());
+
+    auto event_handler          = std::make_unique<EventHandler>();
+    event_handler->handle_read  = std::bind(&Client::handle_read, &client);
+    event_handler->handle_write = std::bind(&Client::handle_write, &client);
+    event_handler->fd           = client.get_fd();
+
+    // Add the listen socket to the epoll instance.
+    epoll_event event;
+    event.events   = EPOLLIN | EPOLLET;
+    event.data.ptr = event_handler.get();
+    if (epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, client.get_fd(), &event) == -1) {
+        throw std::runtime_error("Failed to add client socket with fd: " +
+                                 std::to_string(socket.get_fd()) + " to epoll");
+    }
+
+    _events.push_back(std::move(event_handler));
+
+    _elog.log(ErrorLogger::INFO, "Accepted connection from " + socket.get_address().to_string());
 }
 }  // namespace webserv::server

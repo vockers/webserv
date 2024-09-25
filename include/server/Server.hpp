@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+#include "server/Client.hpp"
 #include "server/EventHandler.hpp"
 #include "server/Listen.hpp"
 #include "utils/Logger.hpp"
@@ -30,8 +31,8 @@ private:
     int          _epoll_fd;
     ErrorLogger& _elog;
 
-    std::vector<Socket> _sockets;
-    Events              _events;
+    std::vector<std::unique_ptr<Client>> _clients;
+    Events                               _events;
 
     void accept();
 };

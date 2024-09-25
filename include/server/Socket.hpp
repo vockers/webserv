@@ -10,7 +10,7 @@ class Socket
 public:
     Socket(Address address);
     Socket(Address address, int fd);
-    ~Socket();
+    virtual ~Socket();
 
     Socket(const Socket&)            = delete;
     Socket& operator=(const Socket&) = delete;
