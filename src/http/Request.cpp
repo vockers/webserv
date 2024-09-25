@@ -15,7 +15,7 @@ const Request::MethodMap Request::METHOD_MAP = {
 Request::Request(const std::string& input)
 {
     size_t headers_start = input.find("\r\n");
-    size_t headers_end = input.find("\r\n\r\n");
+    size_t headers_end   = input.find("\r\n\r\n");
     if (headers_start == std::string::npos || headers_end == std::string::npos) {
         throw 400;
     }
@@ -76,10 +76,10 @@ void Request::parse_headers(const std::string& headers)
             throw 400;
         }
 
-        std::string key = header.substr(0, colon_pos);
+        std::string key   = header.substr(0, colon_pos);
         std::string value = header.substr(colon_pos + 2, header.size() - colon_pos - 3);
 
         _headers[key] = value;
     }
 }
-}
+}  // namespace webserv::http

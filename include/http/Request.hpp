@@ -35,4 +35,4 @@ private:
 
     static const MethodMap METHOD_MAP;
 };
-}
+}  // namespace webserv::http
