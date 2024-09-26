@@ -46,7 +46,7 @@ void Client::read()
     ssize_t bytes_read = ::read(_fd, buffer.get(), BUFFER_SIZE);
     if (bytes_read == -1) {
         if (errno == EAGAIN || errno == EWOULDBLOCK) {
-            _elog.log(ErrorLogger::DEBUG, "No more data available to read right now");
+            _elog.log("No more data available to read right now");
             // No more data available to read right now
             return;
         }
@@ -64,10 +64,9 @@ void Client::read()
 
     // Store the data in your buffer (e.g., _buffer)
     _buffer.write(buffer.get(), bytes_read);
-    _elog.log(
-        ErrorLogger::DEBUG,
-        "Bytes received from " + get_address().to_string() + ": " + std::to_string(bytes_read));
+    _elog.log("Bytes received from " + get_address().to_string() + ": " + std::to_string(bytes_read));
 
+    // TODO: Set to DONE when read: \r\n\r\n
     _read_state = EStatus::DONE;
 }
 
@@ -79,16 +78,16 @@ void Client::write()
 
     if (bytes_written == -1) {
         if (errno == EAGAIN || errno == EWOULDBLOCK) {
-            _elog.log(ErrorLogger::DEBUG, "Socket buffer full, can't write more data right now");
+            _elog.log("Socket buffer full, can't write more data right now");
             return;  // Exit the loop to return control to the event loop
         }
         // Handle other write errors
         _elog.log(ErrorLogger::ERROR, "Error writing to socket");
         return;
     }
-    _elog.log(
-        ErrorLogger::DEBUG,
-        "Bytes written to " + get_address().to_string() + ": " + std::to_string(bytes_written));
+    _elog.log("Bytes written to " + get_address().to_string() + ": " + std::to_string(bytes_written));
     _buffer.str("");  // Clear the buffer after writing
+    
+    _write_state = EStatus::IDLE;
 }
 }  // namespace webserv::server
