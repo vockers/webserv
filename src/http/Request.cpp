@@ -2,8 +2,12 @@
 
 #include <sstream>
 
+#include "http/Response.hpp"
+
 namespace webserv::http
 {
+using StatusCode = Response::StatusCode;
+
 // clang-format off
 const Request::MethodMap Request::METHOD_MAP = {
     {"GET",    Method::GET},
@@ -17,7 +21,7 @@ Request::Request(const std::string& input)
     size_t headers_start = input.find("\r\n");
     size_t headers_end   = input.find("\r\n\r\n");
     if (headers_start == std::string::npos || headers_end == std::string::npos) {
-        throw 400;
+        throw StatusCode::BAD_REQUEST;
     }
 
     std::string line = input.substr(0, headers_start);
@@ -48,16 +52,19 @@ void Request::parse_line(const std::string& line)
 
     std::string method, version;
     line_stream >> method >> _uri >> version;
+    if (line_stream.fail()) {
+        throw StatusCode::BAD_REQUEST;
+    }
 
     // Throws 501 (not implemented) if the method is not supported
     auto it = METHOD_MAP.find(method);
     if (it == METHOD_MAP.end()) {
-        throw 501;
+        throw StatusCode::NOT_IMPLEMENTED;
     }
     _method = it->second;
 
     if (version != "HTTP/1.1") {
-        throw 505;
+        throw StatusCode::HTTP_VERSION_NOT_SUPPORTED;
     }
 }
 
@@ -73,7 +80,7 @@ void Request::parse_headers(const std::string& headers)
 
         size_t colon_pos = header.find(':');
         if (colon_pos == std::string::npos) {
-            throw 400;
+            throw StatusCode::BAD_REQUEST;
         }
 
         std::string key   = header.substr(0, colon_pos);

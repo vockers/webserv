@@ -2,13 +2,14 @@
 
 #include <unistd.h>
 
-#include <iostream>
 #include <memory>
 
 #define BUFFER_SIZE 4096
 
 namespace webserv::server
 {
+using StatusCode = Response::StatusCode;
+
 Client::Client(Socket&& socket, ErrorLogger& elog)
     : Socket(std::move(socket)),
       _elog(elog),
@@ -19,7 +20,6 @@ Client::Client(Socket&& socket, ErrorLogger& elog)
 
 void Client::handle_read()
 {
-    std::cout << "Handling read" << std::endl;
     if (_read_state == EStatus::POLLING)
         this->read();
     if (_read_state == EStatus::DONE) {
@@ -71,8 +71,9 @@ void Client::read()
         _read_state = EStatus::DONE;
         try {
             _request = Request(_buffer.str());
-        } catch (int e) {
-            _elog.log(ErrorLogger::ERROR, "Error parsing request: " + std::to_string(e));
+            _response = Response(_request);
+        } catch (StatusCode code) {
+            _elog.log(ErrorLogger::ERROR, "Error parsing request: " + Response::code_to_string(code));
             return;
         }
     }
@@ -80,9 +81,7 @@ void Client::read()
 
 void Client::write()
 {
-    std::string response = "HTTP/1.1 200 OK\r\nContent-Length: 12\r\n\r\nHello World!";
-
-    ssize_t bytes_written = ::write(_fd, response.c_str(), response.size());
+    ssize_t bytes_written = ::write(_fd, _response.str().c_str(), _response.str().size());
 
     if (bytes_written == -1) {
         if (errno == EAGAIN || errno == EWOULDBLOCK) {

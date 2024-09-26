@@ -3,12 +3,14 @@
 #include <sstream>
 
 #include "http/Request.hpp"
+#include "http/Response.hpp"
 #include "server/Socket.hpp"
 #include "utils/Logger.hpp"
 
 namespace webserv::server
 {
 using webserv::http::Request;
+using webserv::http::Response;
 using webserv::utils::ErrorLogger;
 
 enum class EStatus
@@ -35,6 +37,7 @@ private:
     void write();
 
     Request _request;
+    Response _response;
 
     EStatus _read_state;
     EStatus _write_state;
