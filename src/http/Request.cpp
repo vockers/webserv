@@ -6,6 +6,7 @@
 
 namespace webserv::http
 {
+using FDStatus = server::FDStatus;
 using StatusCode = Response::StatusCode;
 
 // clang-format off
@@ -16,7 +17,12 @@ const Request::MethodMap Request::METHOD_MAP = {
 };
 // clang-format on
 
-Request::Request(const std::string& input)
+Request::Request(Socket& client, ErrorLogger& elog)
+    : Readable(client.get_fd(), FDStatus::POLLING), _client(client), _elog(elog)
+{
+}
+
+void Request::parse(const std::string& input)
 {
     size_t headers_start = input.find("\r\n");
     size_t headers_end   = input.find("\r\n\r\n");
@@ -29,6 +35,42 @@ Request::Request(const std::string& input)
 
     std::string headers = input.substr(headers_start + 2, headers_end - headers_start);
     parse_headers(headers);
+}
+
+void Request::handle_read()
+{
+    ssize_t bytes_read = Readable::read();
+    if (bytes_read == -1) {
+        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            _elog.log("No more data available to read right now");
+            // No more data available to read right now
+            return;
+        }
+        // Handle other read errors
+        _elog.log(ErrorLogger::ERROR, "Error reading from socket");
+        return;
+    }
+
+    else if (bytes_read == 0) {
+        // TODO: Handle client disconnection
+        // Connection closed by the client
+        _elog.log(ErrorLogger::INFO, "Client disconnected from " + _client.get_address().to_string());
+        return;
+    }
+
+    _elog.log("Bytes received from " + _client.get_address().to_string() + ": " +
+              std::to_string(bytes_read));
+
+    if (Readable::str().find("\r\n\r\n") != std::string::npos) {
+        Readable::set_state(FDStatus::DONE);
+        try {
+            this->parse(Readable::str());
+            Response(*this, _elog);
+        } catch (StatusCode code) {
+            _elog.log(ErrorLogger::ERROR, "Error parsing request: " + Response::code_to_string(code));
+            return;
+        }
+    }
 }
 
 Request::Method Request::get_method() const

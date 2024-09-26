@@ -3,9 +3,17 @@
 #include <string>
 #include <unordered_map>
 
+#include "server/Pollable.hpp"
+#include "server/Socket.hpp"
+#include "utils/Logger.hpp"
+
 namespace webserv::http
 {
-class Request
+using server::Readable;
+using server::Socket;
+using utils::ErrorLogger;
+
+class Request : public Readable
 {
 public:
     using Headers = std::unordered_map<std::string, std::string>;
@@ -17,12 +25,16 @@ public:
         DELETE,
     };
 
-    Request() = default;
-    Request(const std::string& input);
+    Request(Socket& client, ErrorLogger& elog);
+
+    void parse(const std::string& input);
+
+    void handle_read() override;
 
     Method             get_method() const;
     const std::string& get_uri() const;
     const Headers&     get_headers() const;
+    Socket&            get_client() const;
 
 private:
     using MethodMap = std::unordered_map<std::string, Method>;
@@ -30,6 +42,8 @@ private:
     Method      _method;
     std::string _uri;
     Headers     _headers;
+    Socket&     _client;
+    ErrorLogger& _elog;
 
     void parse_line(const std::string& line);
     void parse_headers(const std::string& headers);

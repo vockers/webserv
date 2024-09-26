@@ -1,39 +1,81 @@
 #include "http/Response.hpp"
 
-#include <fstream>
+#include <unistd.h>
+#include <fcntl.h>
 #include <unordered_map>
 
 #include "http/Request.hpp"
 
 namespace webserv::http
 {
-Response::Response(const Request& request)
+using server::FDStatus;
+
+Response::Response(const Request& request, ErrorLogger& elog)
+    : _content_length(0), _elog(elog), _request(request)
 {
     code(StatusCode::OK);
 
-    std::fstream file("www/default" + request.get_uri());
-    std::stringstream buffer;
-    buffer << file.rdbuf();
-    body(buffer.str());
+    int fd = open(std::string("www/default" + request.get_uri()).c_str(), O_RDONLY | O_NONBLOCK);
+    if (fd == -1) {
+        throw StatusCode::NOT_FOUND;
+    }
+    Readable::set_fd(fd);
+    Readable::set_state(FDStatus::POLLING);
+    Writable::set_fd(request.get_fd());
 }
 
 Response& Response::code(StatusCode code)
 {
-    *this << "HTTP/1.1 " << code_to_string(code) << "\r\n";
+    Writable::operator<<("HTTP/1.1 ") << code_to_string(code) << "\r\n";
     return *this;
 }
 
 Response& Response::header(const std::string& key, const std::string& value)
 {
-    *this << key << ": " << value << "\r\n";
+    Writable::operator<<(key.c_str()) << ": " << value << "\r\n";
     return *this;
 }
 
 Response& Response::body(const std::string& body)
 {
-    *this << "Content-Length: " << body.size() << "\r\n\r\n";
-    *this << body;
+    Writable::operator<<("Content-Length: ") << body.size() << "\r\n\r\n" << body;
+    _content_length = body.size();
     return *this;
+}
+
+void Response::handle_read()
+{
+    ssize_t bytes_read = Readable::read();
+    if (bytes_read == -1) {
+        _elog.log(ErrorLogger::ERROR, "Error reading from file");
+        return;
+    }
+    if (bytes_read == 0) {
+        Readable::set_state(FDStatus::DONE);
+        body(Readable::str());
+        Writable::set_state(FDStatus::POLLING);
+        close(Readable::get_fd());
+    }
+}
+
+void Response::handle_write()
+{
+    ssize_t bytes_written = Writable::write();
+    if (bytes_written == -1) {
+        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            _elog.log("Socket buffer full, can't write more data right now");
+            return;  // Exit the loop to return control to the event loop
+        }
+        // Handle other write errors
+        _elog.log(ErrorLogger::ERROR, "Error writing to socket");
+        return;
+    }
+    _elog.log("Bytes written to " + _request.get_client().get_address().to_string() + ": " +
+              std::to_string(bytes_written));
+
+    if (Writable::get_bytes() == _content_length) {
+        Writable::set_state(FDStatus::DONE);
+    }
 }
 
 const std::string& Response::code_to_string(StatusCode code)
@@ -51,5 +93,4 @@ const std::string& Response::code_to_string(StatusCode code)
 
     return STATUS_CODES.at(code);
 }
-
 }
