@@ -9,6 +9,13 @@ namespace webserv::server
 {
 using webserv::utils::ErrorLogger;
 
+enum class EStatus
+{
+    IDLE,
+    POLLING,
+    DONE,
+};
+
 class Client : public Socket
 {
 public:
@@ -21,5 +28,11 @@ public:
 private:
     std::stringstream _buffer;
     ErrorLogger&      _elog;
+
+    void read();
+    void write();
+
+    EStatus _read_state;
+    EStatus _write_state;
 };
 }  // namespace webserv::server
