@@ -25,6 +25,8 @@ public:
     /// Runs the event loop.
     void run();
 
+    void add_event(const EventHandler& event);
+
 private:
     std::string  _name;
     Listen       _listen;

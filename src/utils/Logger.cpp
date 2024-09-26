@@ -52,6 +52,11 @@ void ErrorLogger::log(ErrorLogger::Level level, const std::string& message)
     _stream << buffer.str();
 }
 
+void ErrorLogger::log(const std::string& message)
+{
+    log(Level::DEBUG, message);
+}
+
 void ErrorLogger::set_level(ErrorLogger::Level level)
 {
     _level = level;
