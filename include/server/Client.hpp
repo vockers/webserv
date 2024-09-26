@@ -2,11 +2,13 @@
 
 #include <sstream>
 
+#include "http/Request.hpp"
 #include "server/Socket.hpp"
 #include "utils/Logger.hpp"
 
 namespace webserv::server
 {
+using webserv::http::Request;
 using webserv::utils::ErrorLogger;
 
 enum class EStatus
@@ -31,6 +33,8 @@ private:
 
     void read();
     void write();
+
+    Request _request;
 
     EStatus _read_state;
     EStatus _write_state;

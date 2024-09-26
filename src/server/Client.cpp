@@ -64,10 +64,18 @@ void Client::read()
 
     // Store the data in your buffer (e.g., _buffer)
     _buffer.write(buffer.get(), bytes_read);
-    _elog.log("Bytes received from " + get_address().to_string() + ": " + std::to_string(bytes_read));
+    _elog.log("Bytes received from " + get_address().to_string() + ": " +
+              std::to_string(bytes_read));
 
-    // TODO: Set to DONE when read: \r\n\r\n
-    _read_state = EStatus::DONE;
+    if (_buffer.str().find("\r\n\r\n") != std::string::npos) {
+        _read_state = EStatus::DONE;
+        try {
+            _request = Request(_buffer.str());
+        } catch (int e) {
+            _elog.log(ErrorLogger::ERROR, "Error parsing request: " + std::to_string(e));
+            return;
+        }
+    }
 }
 
 void Client::write()
@@ -85,9 +93,10 @@ void Client::write()
         _elog.log(ErrorLogger::ERROR, "Error writing to socket");
         return;
     }
-    _elog.log("Bytes written to " + get_address().to_string() + ": " + std::to_string(bytes_written));
+    _elog.log("Bytes written to " + get_address().to_string() + ": " +
+              std::to_string(bytes_written));
     _buffer.str("");  // Clear the buffer after writing
-    
+
     _write_state = EStatus::IDLE;
 }
 }  // namespace webserv::server
