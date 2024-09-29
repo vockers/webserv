@@ -17,7 +17,8 @@ using utils::ErrorLogger;
 class Server
 {
 public:
-    using Events = std::vector<std::unique_ptr<EventHandler>>;
+    using Clients = std::vector<std::unique_ptr<Client>>;
+    using Events  = std::vector<std::unique_ptr<EventHandler>>;
 
     Server(const std::string& name, const std::string& address, int port, ErrorLogger& elog);
     ~Server();
@@ -26,6 +27,7 @@ public:
     void run();
 
     void add_event(const EventHandler& event);
+    void add_blocking_event(const EventHandler& event);
 
 private:
     std::string  _name;
@@ -33,8 +35,10 @@ private:
     int          _epoll_fd;
     ErrorLogger& _elog;
 
-    std::vector<std::unique_ptr<Client>> _clients;
-    Events                               _events;
+    Clients _clients;
+
+    Events _events;
+    Events _blocking_events;
 
     void accept();
 };

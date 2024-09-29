@@ -6,7 +6,7 @@
 #include "server/Pollable.hpp"
 #include "utils/Logger.hpp"
 
-namespace webserv::http 
+namespace webserv::http
 {
 using server::Readable;
 using server::Writable;
@@ -14,34 +14,37 @@ using utils::ErrorLogger;
 
 class Request;
 
-class Response : public Readable, public Writable
+class Response : public Readable
 {
 public:
     enum class StatusCode
     {
-        OK = 200,
-        BAD_REQUEST = 400,
-        NOT_FOUND = 404,
-        INTERNAL_SERVER_ERROR = 500,
-        NOT_IMPLEMENTED = 501,
+        OK                         = 200,
+        BAD_REQUEST                = 400,
+        NOT_FOUND                  = 404,
+        INTERNAL_SERVER_ERROR      = 500,
+        NOT_IMPLEMENTED            = 501,
         HTTP_VERSION_NOT_SUPPORTED = 505,
     };
 
-    Response(const Request& request, ErrorLogger& elog);
+    Response(const Request& request, Writable& writer, ErrorLogger& elog);
 
     Response& code(StatusCode code);
     Response& header(const std::string& key, const std::string& value);
     Response& body(const std::string& body);
 
     void handle_read() override;
-    void handle_write() override;
+
+    ssize_t get_content_length() const;
 
     static const std::string& code_to_string(StatusCode code);
 
 private:
-    ssize_t _content_length;
+    ssize_t           _content_length;
+    std::stringstream _total_response;
 
-    ErrorLogger&   _elog;
-    const Request& _request;
+    Writable& _writer;
+
+    ErrorLogger& _elog;
 };
-}
+}  // namespace webserv::http

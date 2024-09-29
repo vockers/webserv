@@ -11,24 +11,32 @@ enum class FDStatus
     DONE,
 };
 
-class Pollable : public std::stringstream
+class Pollable
 {
 public:
     Pollable();
     Pollable(int fd, FDStatus state);
 
+    virtual ~Pollable() = default;
+
+    virtual void poll() = 0;
+
     int      get_fd() const;
     ssize_t  get_bytes() const;
     FDStatus get_state() const;
-    
+
     void set_fd(int fd);
     void set_bytes(ssize_t bytes);
     void set_state(FDStatus state);
+
+    std::stringstream& buffer();
 
 private:
     int      _fd;
     ssize_t  _bytes;
     FDStatus _state;
+
+    std::stringstream _buffer;
 };
 
 class Readable : public Pollable
@@ -56,4 +64,4 @@ public:
 
     virtual void handle_write() = 0;
 };
-}
+}  // namespace webserv::server
