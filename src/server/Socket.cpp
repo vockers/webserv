@@ -5,8 +5,12 @@
 
 #include <stdexcept>
 
+#define BUFFER_SIZE 4096
+
 namespace webserv::server
 {
+using async::Event;
+
 Socket::Socket(Address address)
 {
     _fd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
@@ -49,5 +53,24 @@ void Socket::bind(Address address)
         throw std::runtime_error("Failed to bind socket");
     }
     _address = address;
+}
+
+Promise<ssize_t> Socket::read(std::vector<char>& buffer)
+{
+    return Promise<ssize_t>(
+        [this, &buffer]() -> std::optional<ssize_t> {
+            buffer.resize(BUFFER_SIZE);
+            ssize_t bytes_read = ::read(_fd, buffer.data(), BUFFER_SIZE);
+            if (bytes_read == -1) {
+                if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                    return std::nullopt;
+                }
+                throw std::runtime_error("Failed to read from socket");
+            }
+            return bytes_read;
+        },
+        _fd,
+        Event::READABLE
+    );
 }
 }  // namespace webserv::server

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "async/Promise.hpp"
 #include "server/Socket.hpp"
 
 namespace webserv::server
@@ -19,6 +20,6 @@ public:
     /// of pending connections for the  listening  socket
     ///
     /// @return Socket of the accepted connection.
-    Socket accept();
+    Promise<Socket> accept();
 };
 }  // namespace webserv::server
