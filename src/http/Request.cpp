@@ -6,7 +6,6 @@
 
 namespace webserv::http
 {
-using FDStatus   = server::FDStatus;
 using StatusCode = Response::StatusCode;
 
 // clang-format off

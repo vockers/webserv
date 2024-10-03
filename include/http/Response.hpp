@@ -1,20 +1,18 @@
 #pragma once
 
 #include <string>
+#include <sstream>
 
 #include "http/Request.hpp"
-#include "server/Pollable.hpp"
 #include "utils/Logger.hpp"
 
 namespace webserv::http
 {
-using server::Readable;
-using server::Writable;
 using utils::ErrorLogger;
 
 class Request;
 
-class Response : public Readable
+class Response
 {
 public:
     enum class StatusCode
@@ -27,13 +25,11 @@ public:
         HTTP_VERSION_NOT_SUPPORTED = 505,
     };
 
-    Response(const Request& request, Writable& writer, ErrorLogger& elog);
+    Response(const Request& request, ErrorLogger& elog);
 
     Response& code(StatusCode code);
     Response& header(const std::string& key, const std::string& value);
     Response& body(const std::string& body);
-
-    void handle_read() override;
 
     ssize_t get_content_length() const;
 
@@ -42,8 +38,6 @@ public:
 private:
     ssize_t           _content_length;
     std::stringstream _total_response;
-
-    Writable& _writer;
 
     ErrorLogger& _elog;
 };

@@ -33,7 +33,7 @@ Promise<Socket> Listen::accept()
             if (fcntl(fd, F_SETFL, O_NONBLOCK) == -1) {
                 throw std::runtime_error("Failed to set O_NONBLOCK on accepted socket");
             }
-            return Socket(Address(accepted_addr), fd);
+            return Socket(Socket(Address(accepted_addr), fd));
     }, _fd, Event::READABLE);
 }
 }  // namespace webserv::server

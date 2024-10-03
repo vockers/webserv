@@ -3,6 +3,8 @@
 #include "async/Promise.hpp"
 #include "server/Socket.hpp"
 
+#include <memory>
+
 namespace webserv::server
 {
 /// A socket that listens for incoming connections.

@@ -9,10 +9,8 @@
 
 namespace webserv::http
 {
-using server::FDStatus;
-
-Response::Response(const Request& request, Writable& writer, ErrorLogger& elog)
-    : _content_length(0), _writer(writer), _elog(elog)
+Response::Response(const Request& request, ErrorLogger& elog)
+    : _content_length(0), _elog(elog)
 {
     code(StatusCode::OK);
     elog.log("Request URI: " + request.get_uri());
@@ -21,42 +19,27 @@ Response::Response(const Request& request, Writable& writer, ErrorLogger& elog)
     if (fd == -1) {
         throw StatusCode::NOT_FOUND;
     }
-    Readable::set_fd(fd);
-    Readable::set_state(FDStatus::POLLING);
+    /*Readable::set_fd(fd);*/
+    /*Readable::set_state(FDStatus::POLLING);*/
 }
 
 Response& Response::code(StatusCode code)
 {
-    _writer.buffer() << ("HTTP/1.1 ") << code_to_string(code) << "\r\n";
+    /*_writer.buffer() << ("HTTP/1.1 ") << code_to_string(code) << "\r\n";*/
     return *this;
 }
 
 Response& Response::header(const std::string& key, const std::string& value)
 {
-    _writer.buffer() << (key.c_str()) << ": " << value << "\r\n";
+    /*_writer.buffer() << (key.c_str()) << ": " << value << "\r\n";*/
     return *this;
 }
 
 Response& Response::body(const std::string& body)
 {
     _content_length = body.size();
-    _writer.buffer() << ("Content-Length: ") << _content_length << "\r\n\r\n" << body;
+    /*_writer.buffer() << ("Content-Length: ") << _content_length << "\r\n\r\n" << body;*/
     return *this;
-}
-
-void Response::handle_read()
-{
-    ssize_t bytes_read = Readable::read();
-    if (bytes_read == -1) {
-        _elog.log(ErrorLogger::ERROR, "Error reading from file");
-        return;
-    }
-    if (bytes_read == 0) {
-        Readable::set_state(FDStatus::DONE);
-        body(Readable::buffer().str());
-        _writer.set_state(FDStatus::POLLING);
-        close(Readable::get_fd());
-    }
 }
 
 ssize_t Response::get_content_length() const

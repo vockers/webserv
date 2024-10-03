@@ -5,10 +5,16 @@
 
 namespace webserv::async
 {
+enum class Poll
+{
+    READY,
+    PENDING,
+};
+
 class Event
 {
 public:
-    using PollFn = std::function<void()>;
+    using PollFn = std::function<Poll()>;
 
     enum Type
     {
@@ -21,7 +27,7 @@ public:
     uint32_t to_epoll() const;
     int      get_fd() const;
 
-    void poll() const;
+    Poll poll() const;
 
 private:
     int      _fd;

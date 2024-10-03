@@ -1,9 +1,10 @@
 #include "async/Poller.hpp"
 
-#include <sys/epoll.h>
 #include <unistd.h>
 #include <stdexcept>
 #include <fcntl.h>
+
+#include "async/Promise.hpp"
 
 namespace webserv::async
 {
@@ -34,32 +35,42 @@ void Poller::poll()
     for (int i = 0; i < num_events; i++) {
         Event* event = static_cast<Event*>(events[i].data.ptr);
         if (events[i].events & EPOLLIN) {
-            event->poll();
+            std::cout << "EPOLLIN: " << event->get_fd() << std::endl;
+            Poll poll = event->poll();
+            if (poll == Poll::READY) {
+                epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, event->get_fd(), nullptr);
+                _promises.erase(event->get_fd());
+                _events.erase(event->get_fd());
+            }
         }
-        if (events[i].events & EPOLLOUT) {
+        else if (events[i].events & EPOLLOUT) {
             event->poll();
         }
     }
 }
 
-void Poller::add(Event event)
+void Poller::add_promise(IPromise promise, int fd, Event::Type type)
 {
-    if (_events.find(event.get_fd()) != _events.end()) {
+    if (_promises.find(fd) != _promises.end()) {
         return;
     }
 
-    auto event_ptr = std::make_unique<Event>(event);
+    auto promise_ptr = std::make_unique<IPromise>(promise);
+    auto event_ptr = std::make_unique<Event>(fd, type, std::bind(&IPromise::poll, promise_ptr.get()));
 
     epoll_event ev;
-    ev.events  = event.to_epoll();
+    ev.events  = event_ptr->to_epoll();
     ev.data.ptr = event_ptr.get();
 
-    if (epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, event.get_fd(), &ev) == -1) {
+    if (epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, event_ptr->get_fd(), &ev) == -1) {
         throw std::runtime_error("Failed to add event to epoll instance");
     }
 
-    _events[event.get_fd()] = std::move(event_ptr);
+    _events[fd] = std::move(event_ptr);
+    _promises[fd] = std::move(promise_ptr);
 }
+
+
 
 Poller& Poller::instance()
 {

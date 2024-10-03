@@ -26,8 +26,8 @@ int Event::get_fd() const
     return _fd;
 }
 
-void Event::poll() const
+Poll Event::poll() const
 {
-    _poll();
+    return _poll();
 }
 }
