@@ -9,8 +9,7 @@
 
 namespace webserv::http
 {
-Response::Response(const Request& request, ErrorLogger& elog)
-    : _content_length(0), _elog(elog)
+Response::Response(const Request& request, ErrorLogger& elog) : _content_length(0), _elog(elog)
 {
     code(StatusCode::OK);
     elog.log("Request URI: " + request.get_uri());

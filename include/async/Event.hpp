@@ -20,7 +20,7 @@ public:
     {
         READABLE = 1 << 0,
         WRITABLE = 1 << 1,
-    }; 
+    };
 
     Event(int fd, uint32_t type, PollFn poll);
 
@@ -34,4 +34,4 @@ private:
     uint32_t _type;
     PollFn   _poll;
 };
-}
+}  // namespace webserv::async

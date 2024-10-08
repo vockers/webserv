@@ -30,13 +30,15 @@ void Server::run()
             _clients.emplace_back(std::make_unique<Client>(std::move(socket), *this, _elog));
 
             Client& client = *(_clients.back());
-            std::vector<char> buffer(1024);
-            client.read(buffer).then([this, &client, buffer](ssize_t bytes_read) {
-                std::string str(buffer.begin(), buffer.end());
-                _elog.log(ErrorLogger::INFO, "Received data from " + client.get_address().to_string() + ": " + str + " (" + std::to_string(bytes_read) + " bytes)");
+            client.read(client.buffer).then([this, &client](ssize_t bytes_read) {
+                std::string str(client.buffer.begin(), client.buffer.end());
+                _elog.log(ErrorLogger::INFO,
+                          "Received data from " + client.get_address().to_string() + ": " + str +
+                              " (" + std::to_string(bytes_read) + " bytes)");
             });
 
-            _elog.log(ErrorLogger::INFO, "Accepted connection from " + client.get_address().to_string());
+            _elog.log(ErrorLogger::INFO,
+                      "Accepted connection from " + client.get_address().to_string());
         });
 
         Poller::instance().poll();
@@ -55,6 +57,7 @@ void Server::accept()
     /*                   std::bind(&Client::Writable::poll, &client));*/
     /*this->add_event(event);*/
     /**/
-    /*_elog.log(ErrorLogger::INFO, "Accepted connection from " + socket.get_address().to_string());*/
+    /*_elog.log(ErrorLogger::INFO, "Accepted connection from " +
+     * socket.get_address().to_string());*/
 }
 }  // namespace webserv::server

@@ -38,7 +38,8 @@ Client::~Client()
 /*        else if (bytes_read == 0) {*/
 /*            // TODO: Handle client disconnection*/
 /*            // Connection closed by the client*/
-/*            _elog.log(ErrorLogger::INFO, "Client disconnected from " + get_address().to_string());*/
+/*            _elog.log(ErrorLogger::INFO, "Client disconnected from " +
+ * get_address().to_string());*/
 /*            return;*/
 /*        }*/
 /**/

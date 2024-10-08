@@ -34,6 +34,8 @@ Promise<Socket> Listen::accept()
                 throw std::runtime_error("Failed to set O_NONBLOCK on accepted socket");
             }
             return Socket(Socket(Address(accepted_addr), fd));
-    }, _fd, Event::READABLE);
+        },
+        _fd,
+        Event::READABLE);
 }
 }  // namespace webserv::server

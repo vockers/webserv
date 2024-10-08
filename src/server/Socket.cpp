@@ -70,7 +70,6 @@ Promise<ssize_t> Socket::read(std::vector<char>& buffer)
             return bytes_read;
         },
         _fd,
-        Event::READABLE
-    );
+        Event::READABLE);
 }
 }  // namespace webserv::server

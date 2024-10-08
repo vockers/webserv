@@ -4,10 +4,7 @@
 
 namespace webserv::async
 {
-Event::Event(int fd, uint32_t type, PollFn poll)
-    : _fd(fd), _type(type), _poll(poll)
-{
-}
+Event::Event(int fd, uint32_t type, PollFn poll) : _fd(fd), _type(type), _poll(poll) {}
 
 uint32_t Event::to_epoll() const
 {
@@ -30,4 +27,4 @@ Poll Event::poll() const
 {
     return _poll();
 }
-}
+}  // namespace webserv::async

@@ -1,9 +1,9 @@
 #pragma once
 
+#include <memory>
+
 #include "async/Promise.hpp"
 #include "server/Socket.hpp"
-
-#include <memory>
 
 namespace webserv::server
 {

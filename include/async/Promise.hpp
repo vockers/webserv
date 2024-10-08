@@ -2,7 +2,6 @@
 
 #include <functional>
 #include <optional>
-#include <iostream>
 
 #include "async/Poller.hpp"
 
@@ -12,20 +11,22 @@ class IPromise
 {
 public:
     virtual ~IPromise() = default;
-    virtual Poll poll() { return Poll::READY; }
+    virtual Poll poll() = 0;
 };
 
 template <typename T>
 class Promise : public IPromise
 {
 public:
-    using TaskFn = std::function<std::optional<T>()>;
-    using RejectFn = std::function<void()>;
+    using TaskFn     = std::function<std::optional<T>()>;
+    using RejectFn   = std::function<void(Promise<T>)>;
     using CallbackFn = std::function<void(T)>;
 
     Promise(TaskFn task, int fd, Event::Type type)
-        : _task(task), _reject([this, fd, type]() { 
-            Poller::instance().add_promise(*this, fd, type);})
+        : _task(task), _reject([fd, type](Promise<T> promise) {
+              auto promise_ptr = std::make_unique<Promise<T>>(promise);
+              Poller::instance().add_promise(std::move(promise_ptr), fd, type);
+          })
     {
     }
 
@@ -33,13 +34,12 @@ public:
     {
         std::optional<T> value = _task();
 
-        std::cout << "Promise::poll: no value" << std::endl;
-        if (value.has_value() && _callback) {
+        if (value.has_value()) {
             _callback(std::move(value.value()));
             return Poll::READY;
         }
         return Poll::PENDING;
-    } 
+    }
 
     Promise<T>& then(CallbackFn callback)
     {
@@ -48,17 +48,16 @@ public:
         if (value.has_value()) {
             callback(std::move(value.value()));
         } else {
-            std::cout << "Promise::then: no value" << std::endl;
             _callback = callback;
-            _reject();
+            _reject(*this);
         }
 
         return *this;
     }
 
 private:
-    TaskFn   _task;
-    RejectFn _reject;
+    TaskFn     _task;
+    RejectFn   _reject;
     CallbackFn _callback;
 };
-}
+}  // namespace webserv::async
