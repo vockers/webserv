@@ -31,6 +31,7 @@ public:
     int      get_fd() const;
 
     Poll poll() const;
+    void callback();
 
 private:
     int      _fd;

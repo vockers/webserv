@@ -24,7 +24,6 @@ public:
 
     void add_promise(std::unique_ptr<IPromise> promise, int fd, Event::Type type);
     void add_promise(std::unique_ptr<IPromise> promise);
-    void add_event(Event event);
 
     static Poller& instance();
 
