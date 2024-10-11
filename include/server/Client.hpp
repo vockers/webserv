@@ -1,8 +1,5 @@
 #pragma once
 
-#include <memory>
-
-#include "async/Promise.hpp"
 #include "http/Request.hpp"
 #include "server/Socket.hpp"
 #include "utils/Logger.hpp"
@@ -23,9 +20,14 @@ public:
 
     using Socket::get_fd;
 
+    /// Handles the connection by reading a
+    /// request and sending a response
     void handle_connection();
 
 private:
+    /// Asynchronously reads a request from the client
+    ///
+    /// @return The request as a promise
     Promise<Request> read_request();
 
     Server&      _server;

@@ -38,6 +38,11 @@ public:
     {
     }
 
+    /// Polls the promise to check if it is resolved
+    ///
+    /// If the promise is resolved, the callback is called
+    ///
+    /// @return The poll result, either PENDING or READY
     Poll poll() override
     {
         std::optional<T> value = _task();
@@ -49,6 +54,13 @@ public:
         return Poll::PENDING;
     }
 
+    /// Registers a callback to be called when the promise is resolved
+    ///
+    /// If the promise can be resolved immediately, the callback is called
+    /// immediately. Otherwise, the promise is added to the poller
+    ///
+    /// @param callback The callback to call
+    /// @return The promise
     Promise<T>& then(CallbackFn callback)
     {
         std::optional<T> value = _task();

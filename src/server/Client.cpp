@@ -26,6 +26,7 @@ void Client::handle_connection()
     this->read_request().then([this](Request request) {
         _elog.log(ErrorLogger::DEBUG, "Received request from " + get_address().to_string());
 
+        // Create a response and send it back to the client
         _response = Response(request, _elog).str();
         this->write(std::vector<char>(_response.begin(), _response.end()))
             .then([this](ssize_t bytes_written) {
@@ -33,6 +34,7 @@ void Client::handle_connection()
                           "Sent response to " + get_address().to_string() + ": " +
                               std::to_string(bytes_written) + " bytes");
 
+                // Handle the next request and response
                 this->handle_connection();
             });
     });
@@ -44,11 +46,13 @@ Promise<Request> Client::read_request()
         this->read(_buffer).then([this](ssize_t bytes_read) {
             _request += std::string(_buffer.begin(), _buffer.begin() + bytes_read);
             _buffer.clear();
+
             _elog.log(ErrorLogger::DEBUG,
                       "Received data from " + get_address().to_string() + ": " +
                           std::to_string(bytes_read) + " bytes");
         });
 
+        // Check if the request is complete, i.e. contains two CRLF sequences
         if (_request.find("\r\n\r\n") != std::string::npos) {
             return Request(_request);
         }

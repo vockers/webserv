@@ -20,9 +20,20 @@ public:
     Poller();
     ~Poller();
 
+    /// Poll for events and promises
     void poll();
 
+    /// Adds a promise to the poller with the specified
+    /// file descriptor and event type
+    ///
+    /// @param promise The promise to add
+    /// @param fd The file descriptor to poll
+    /// @param type The event type to poll for
     void add_promise(std::unique_ptr<IPromise> promise, int fd, Event::Type type);
+
+    /// Adds a promise to the poller
+    ///
+    /// @param promise The promise to add
     void add_promise(std::unique_ptr<IPromise> promise);
 
     static Poller& instance();

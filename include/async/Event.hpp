@@ -30,8 +30,10 @@ public:
     uint32_t to_epoll() const;
     int      get_fd() const;
 
+    /// Polls the event to check if it is ready
+    ///
+    /// @return The poll result, either READY or PENDING
     Poll poll() const;
-    void callback();
 
 private:
     int      _fd;

@@ -23,8 +23,6 @@ public:
     /// Runs the event loop.
     void run();
 
-    std::vector<char> buffer;
-
 private:
     std::string  _name;
     Listen       _listen;
