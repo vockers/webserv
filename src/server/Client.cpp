@@ -27,7 +27,7 @@ void Client::handle_connection()
 
     this->read_request().then([this](Request request) {
         /*_request = request;*/
-        _elog.log(ErrorLogger::INFO, "Received request from " + get_address().to_string());
+        _elog.log(ErrorLogger::DEBUG, "Received request from " + get_address().to_string());
         /*_response = Response(_request, *this, _elog);*/
         /*_response.poll().then([this](Poll poll) {*/
         /*    if (poll == Poll::READY) {*/
@@ -36,6 +36,12 @@ void Client::handle_connection()
         /*    }*/
         /*});*/
         _response = Response(request, _elog).str();
+        this->write(std::vector<char>(_response.begin(), _response.end()))
+            .then([this](ssize_t bytes_written) {
+                _elog.log(ErrorLogger::DEBUG,
+                          "Sent response to " + get_address().to_string() + ": " +
+                              std::to_string(bytes_written) + " bytes");
+            });
     });
 }
 

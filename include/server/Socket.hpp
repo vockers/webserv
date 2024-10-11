@@ -30,6 +30,7 @@ public:
     void bind(Address address);
 
     Promise<ssize_t> read(std::vector<char>& buffer);
+    Promise<ssize_t> write(const std::vector<char>& buffer);
 
 protected:
     Address _address;

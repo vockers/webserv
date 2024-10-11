@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include <fstream>
 #include <unordered_map>
 
 #include "http/Request.hpp"
@@ -14,10 +15,14 @@ Response::Response(const Request& request, ErrorLogger& elog) : _content_length(
     code(StatusCode::OK);
     elog.log("Request URI: " + request.get_uri());
 
-    int fd = open(std::string("www/default" + request.get_uri()).c_str(), O_RDONLY);
-    if (fd == -1) {
+    std::fstream file(std::string("www/default" + request.get_uri()),
+                      std::ios::in | std::ios::binary);
+    if (!file.is_open()) {
         throw StatusCode::NOT_FOUND;
     }
+    std::stringstream ss;
+    ss << file.rdbuf();
+    body(ss.str());
 }
 
 Response& Response::code(StatusCode code)

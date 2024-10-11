@@ -5,7 +5,9 @@
 
 #include <stdexcept>
 
+#ifndef BUFFER_SIZE
 #define BUFFER_SIZE 4096
+#endif
 
 namespace webserv::server
 {
@@ -67,10 +69,26 @@ Promise<ssize_t> Socket::read(std::vector<char>& buffer)
                 }
                 throw std::runtime_error("Failed to read from socket");
             }
-            buffer.resize(bytes_read);
             return bytes_read;
         },
         _fd,
         Event::READABLE);
+}
+
+Promise<ssize_t> Socket::write(const std::vector<char>& buffer)
+{
+    return Promise<ssize_t>(
+        [this, &buffer]() -> std::optional<ssize_t> {
+            ssize_t bytes_written = ::write(_fd, buffer.data(), buffer.size());
+            if (bytes_written == -1) {
+                if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                    return std::nullopt;
+                }
+                throw std::runtime_error("Failed to write to socket");
+            }
+            return bytes_written;
+        },
+        _fd,
+        Event::WRITABLE);
 }
 }  // namespace webserv::server
