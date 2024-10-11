@@ -12,7 +12,7 @@ using utils::ErrorLogger;
 
 class Request;
 
-class Response
+class Response : public std::stringstream
 {
 public:
     enum class StatusCode
@@ -36,8 +36,7 @@ public:
     static const std::string& code_to_string(StatusCode code);
 
 private:
-    ssize_t           _content_length;
-    std::stringstream _total_response;
+    ssize_t _content_length;
 
     ErrorLogger& _elog;
 };

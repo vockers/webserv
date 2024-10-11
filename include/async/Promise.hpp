@@ -30,6 +30,14 @@ public:
     {
     }
 
+    Promise(TaskFn task)
+        : _task(task), _reject([](Promise<T> promise) {
+              auto promise_ptr = std::make_unique<Promise<T>>(promise);
+              Poller::instance().add_promise(std::move(promise_ptr));
+          })
+    {
+    }
+
     Poll poll() override
     {
         std::optional<T> value = _task();

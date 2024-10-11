@@ -15,7 +15,7 @@ class Poller
 {
 public:
     using Events   = std::unordered_map<int, std::unique_ptr<Event>>;
-    using Promises = std::unordered_map<int, std::unique_ptr<IPromise>>;
+    using Promises = std::vector<std::unique_ptr<IPromise>>;
 
     Poller();
     ~Poller();
@@ -23,6 +23,7 @@ public:
     void poll();
 
     void add_promise(std::unique_ptr<IPromise> promise, int fd, Event::Type type);
+    void add_promise(std::unique_ptr<IPromise> promise);
     void add_event(Event event);
 
     static Poller& instance();
@@ -30,6 +31,6 @@ public:
 private:
     int      _epoll_fd;
     Events   _events;
-    Promises _promises;
+    Promises _blocking_promises;
 };
 }  // namespace webserv::async

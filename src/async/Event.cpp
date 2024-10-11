@@ -2,9 +2,17 @@
 
 #include <sys/epoll.h>
 
+#include <functional>
+
+#include "async/Promise.hpp"
+
 namespace webserv::async
 {
-Event::Event(int fd, uint32_t type, PollFn poll) : _fd(fd), _type(type), _poll(poll) {}
+Event::Event(int fd, uint32_t type, std::unique_ptr<IPromise> promise)
+    : _fd(fd), _type(type), _promise(std::move(promise))
+{
+    _poll = std::bind(&IPromise::poll, _promise.get());
+}
 
 uint32_t Event::to_epoll() const
 {

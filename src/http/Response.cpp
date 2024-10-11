@@ -18,26 +18,24 @@ Response::Response(const Request& request, ErrorLogger& elog) : _content_length(
     if (fd == -1) {
         throw StatusCode::NOT_FOUND;
     }
-    /*Readable::set_fd(fd);*/
-    /*Readable::set_state(FDStatus::POLLING);*/
 }
 
 Response& Response::code(StatusCode code)
 {
-    /*_writer.buffer() << ("HTTP/1.1 ") << code_to_string(code) << "\r\n";*/
+    *this << ("HTTP/1.1 ") << code_to_string(code) << "\r\n";
     return *this;
 }
 
 Response& Response::header(const std::string& key, const std::string& value)
 {
-    /*_writer.buffer() << (key.c_str()) << ": " << value << "\r\n";*/
+    *this << (key.c_str()) << ": " << value << "\r\n";
     return *this;
 }
 
 Response& Response::body(const std::string& body)
 {
     _content_length = body.size();
-    /*_writer.buffer() << ("Content-Length: ") << _content_length << "\r\n\r\n" << body;*/
+    *this << ("Content-Length: ") << _content_length << "\r\n\r\n" << body;
     return *this;
 }
 

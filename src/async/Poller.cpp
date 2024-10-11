@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include <iostream>
 #include <stdexcept>
 
 #include "async/Promise.hpp"
@@ -34,29 +35,48 @@ void Poller::poll()
     }
 
     for (int i = 0; i < num_events; i++) {
-        Event* event = static_cast<Event*>(events[i].data.ptr);
+        /*Event* event = static_cast<Event*>(events[i].data.ptr);*/
+        Event* event = _events[events[i].data.fd].get();
         if (events[i].events & EPOLLIN) {
             Poll poll = event->poll();
             if (poll == Poll::READY) {
                 epoll_ctl(_epoll_fd, EPOLL_CTL_DEL, event->get_fd(), nullptr);
-                _promises.erase(event->get_fd());
                 _events.erase(event->get_fd());
             }
         } else if (events[i].events & EPOLLOUT) {
             event->poll();
         }
     }
+
+    for (auto it = _blocking_promises.begin(); it != _blocking_promises.end(); it++) {
+        Poll poll = (*it)->poll();
+        if (poll == Poll::READY) {
+            _blocking_promises.erase(it);
+            break;
+        }
+    }
 }
 
 void Poller::add_promise(std::unique_ptr<IPromise> promise, int fd, Event::Type type)
 {
-    if (_promises.find(fd) != _promises.end()) {
-        return;
+    auto event_ptr = std::make_unique<Event>(Event(fd, type, std::move(promise)));
+
+    if (_events.find(fd) == _events.end()) {
+        epoll_event ev;
+        ev.events  = event_ptr->to_epoll();
+        ev.data.fd = fd;
+
+        if (epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, event_ptr->get_fd(), &ev) == -1) {
+            throw std::runtime_error("Failed to add event to epoll instance");
+        }
     }
 
-    this->add_event(Event(fd, type, std::bind(&IPromise::poll, promise.get())));
+    _events[fd] = std::move(event_ptr);
+}
 
-    _promises[fd] = std::move(promise);
+void Poller::add_promise(std::unique_ptr<IPromise> promise)
+{
+    _blocking_promises.push_back(std::move(promise));
 }
 
 void Poller::add_event(Event event)
@@ -64,18 +84,6 @@ void Poller::add_event(Event event)
     if (_events.find(event.get_fd()) != _events.end()) {
         return;
     }
-
-    auto event_ptr = std::make_unique<Event>(event);
-
-    epoll_event ev;
-    ev.events   = event_ptr->to_epoll();
-    ev.data.ptr = event_ptr.get();
-
-    if (epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, event_ptr->get_fd(), &ev) == -1) {
-        throw std::runtime_error("Failed to add event to epoll instance");
-    }
-
-    _events[event.get_fd()] = std::move(event_ptr);
 }
 
 Poller& Poller::instance()

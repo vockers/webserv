@@ -67,6 +67,7 @@ Promise<ssize_t> Socket::read(std::vector<char>& buffer)
                 }
                 throw std::runtime_error("Failed to read from socket");
             }
+            buffer.resize(bytes_read);
             return bytes_read;
         },
         _fd,

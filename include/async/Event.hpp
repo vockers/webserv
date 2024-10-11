@@ -2,9 +2,12 @@
 
 #include <cstdint>
 #include <functional>
+#include <memory>
 
 namespace webserv::async
 {
+class IPromise;
+
 enum class Poll
 {
     READY,
@@ -22,7 +25,7 @@ public:
         WRITABLE = 1 << 1,
     };
 
-    Event(int fd, uint32_t type, PollFn poll);
+    Event(int fd, uint32_t type, std::unique_ptr<IPromise> promise);
 
     uint32_t to_epoll() const;
     int      get_fd() const;
@@ -33,5 +36,7 @@ private:
     int      _fd;
     uint32_t _type;
     PollFn   _poll;
+
+    std::unique_ptr<IPromise> _promise;
 };
 }  // namespace webserv::async
