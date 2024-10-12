@@ -1,31 +1,16 @@
 #include "server/Client.hpp"
 
-#include <unistd.h>
-
-#include <iostream>
-#include <memory>
-
-#define BUFFER_SIZE 4096
+#include "http/Response.hpp"
+#include "server/Server.hpp"
 
 namespace webserv::server
 {
-Client::Client(Socket&& socket, ErrorLogger& elog)
-    : Socket(std::move(socket)),
-      _elog(elog),
-      _read_state(EStatus::POLLING),
-      _write_state(EStatus::IDLE)
-{
-}
+/*using StatusCode = Response::StatusCode;*/
+using http::Response;
 
-void Client::handle_read()
+Client::Client(Socket&& socket, Server& server, ErrorLogger& elog)
+    : Socket(std::move(socket)), _server(server), _elog(elog)
 {
-    std::cout << "Handling read" << std::endl;
-    if (_read_state == EStatus::POLLING)
-        this->read();
-    if (_read_state == EStatus::DONE) {
-        _read_state  = EStatus::POLLING;
-        _write_state = EStatus::POLLING;
-    }
 }
 
 Client::~Client()
@@ -33,70 +18,51 @@ Client::~Client()
     _elog.log(ErrorLogger::INFO, "Client disconnected from: " + _address.to_string());
 }
 
-void Client::handle_write()
+void Client::handle_connection()
 {
-    if (_write_state == EStatus::POLLING)
-        this->write();
+    _request.clear();
+    _response.clear();
+
+    this->read_request().then([this](Request request) {
+        _elog.log(ErrorLogger::DEBUG, "Received request from " + get_address().to_string());
+
+        // Create a response and send it back to the client
+        _response = Response(request, _elog).str();
+        this->write(std::vector<char>(_response.begin(), _response.end()))
+            .then([this](ssize_t bytes_written) {
+                _elog.log(ErrorLogger::DEBUG,
+                          "Sent response to " + get_address().to_string() + ": " +
+                              std::to_string(bytes_written) + " bytes");
+
+                // Handle the next request and response
+                this->handle_connection();
+            });
+    });
 }
 
-void Client::read()
+Promise<Request> Client::read_request()
 {
-    std::unique_ptr<char[]> buffer(new char[BUFFER_SIZE]{0});
+    return Promise<Request>([this]() -> std::optional<Request> {
+        this->read(_buffer).then([this](ssize_t bytes_read) {
+            if (bytes_read == 0) {
+                this->close();
+                return;
+            }
 
-    ssize_t bytes_read = ::read(_fd, buffer.get(), BUFFER_SIZE);
-    if (bytes_read == -1) {
-        if (errno == EAGAIN || errno == EWOULDBLOCK) {
-            _elog.log("No more data available to read right now");
-            // No more data available to read right now
-            return;
+            _request += std::string(_buffer.begin(), _buffer.begin() + bytes_read);
+            _buffer.clear();
+
+            _elog.log(ErrorLogger::DEBUG,
+                      "Received data from " + get_address().to_string() + ": " +
+                          std::to_string(bytes_read) + " bytes");
+        });
+
+        // Check if the request is complete, i.e. contains two CRLF sequences
+        if (_request.find("\r\n\r\n") != std::string::npos) {
+            return Request(_request);
         }
-        // Handle other read errors
-        _elog.log(ErrorLogger::ERROR, "Error reading from socket");
-        return;
-    }
 
-    else if (bytes_read == 0) {
-        // TODO: Handle client disconnection
-        // Connection closed by the client
-        _elog.log(ErrorLogger::INFO, "Client disconnected from " + get_address().to_string());
-        return;
-    }
-
-    // Store the data in your buffer (e.g., _buffer)
-    _buffer.write(buffer.get(), bytes_read);
-    _elog.log("Bytes received from " + get_address().to_string() + ": " +
-              std::to_string(bytes_read));
-
-    if (_buffer.str().find("\r\n\r\n") != std::string::npos) {
-        _read_state = EStatus::DONE;
-        try {
-            _request = Request(_buffer.str());
-        } catch (int e) {
-            _elog.log(ErrorLogger::ERROR, "Error parsing request: " + std::to_string(e));
-            return;
-        }
-    }
-}
-
-void Client::write()
-{
-    std::string response = "HTTP/1.1 200 OK\r\nContent-Length: 12\r\n\r\nHello World!";
-
-    ssize_t bytes_written = ::write(_fd, response.c_str(), response.size());
-
-    if (bytes_written == -1) {
-        if (errno == EAGAIN || errno == EWOULDBLOCK) {
-            _elog.log("Socket buffer full, can't write more data right now");
-            return;  // Exit the loop to return control to the event loop
-        }
-        // Handle other write errors
-        _elog.log(ErrorLogger::ERROR, "Error writing to socket");
-        return;
-    }
-    _elog.log("Bytes written to " + get_address().to_string() + ": " +
-              std::to_string(bytes_written));
-    _buffer.str("");  // Clear the buffer after writing
-
-    _write_state = EStatus::IDLE;
+        return std::nullopt;
+    });
 }
 }  // namespace webserv::server

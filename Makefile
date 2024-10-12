@@ -4,8 +4,8 @@ INCLUDE_DIR	= ./include
 OBJ_DIR		= ./.obj
 
 CXX			= clang++
-CXXFLAGS	= -Wall -Wextra -Werror -I$(INCLUDE_DIR) -std=c++20
-DEBUG_FLAGS	= -MMD -MP -g #-fsanitize=address
+CXXFLAGS	= -I$(INCLUDE_DIR) -std=c++20
+DEBUG_FLAGS	= -MMD -MP -g -fsanitize=address
 
 SRCS		= $(wildcard $(SRC_DIR)/*.cpp) $(wildcard $(SRC_DIR)/*/*.cpp)
 OBJS		= $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SRCS))

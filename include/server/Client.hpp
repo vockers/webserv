@@ -1,42 +1,40 @@
 #pragma once
 
-#include <sstream>
-
 #include "http/Request.hpp"
 #include "server/Socket.hpp"
 #include "utils/Logger.hpp"
 
 namespace webserv::server
 {
-using webserv::http::Request;
-using webserv::utils::ErrorLogger;
+using http::Request;
+/*using http::Response;*/
+using utils::ErrorLogger;
 
-enum class EStatus
-{
-    IDLE,
-    POLLING,
-    DONE,
-};
+class Server;
 
 class Client : public Socket
 {
 public:
-    Client(Socket&& socket, ErrorLogger& elog);
+    Client(Socket&& socket, Server& server, ErrorLogger& elog);
     ~Client();
 
-    void handle_read();
-    void handle_write();
+    using Socket::get_fd;
+
+    /// Handles the connection by reading a
+    /// request and sending a response
+    void handle_connection();
 
 private:
-    std::stringstream _buffer;
-    ErrorLogger&      _elog;
+    /// Asynchronously reads a request from the client
+    ///
+    /// @return The request as a promise
+    Promise<Request> read_request();
 
-    void read();
-    void write();
+    Server&      _server;
+    ErrorLogger& _elog;
 
-    Request _request;
-
-    EStatus _read_state;
-    EStatus _write_state;
+    std::vector<char> _buffer;
+    std::string       _request;
+    std::string       _response;
 };
 }  // namespace webserv::server

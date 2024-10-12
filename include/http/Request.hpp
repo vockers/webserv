@@ -17,7 +17,6 @@ public:
         DELETE,
     };
 
-    Request() = default;
     Request(const std::string& input);
 
     Method             get_method() const;
