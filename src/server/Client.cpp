@@ -44,6 +44,11 @@ Promise<Request> Client::read_request()
 {
     return Promise<Request>([this]() -> std::optional<Request> {
         this->read(_buffer).then([this](ssize_t bytes_read) {
+            if (bytes_read == 0) {
+                this->close();
+                return;
+            }
+
             _request += std::string(_buffer.begin(), _buffer.begin() + bytes_read);
             _buffer.clear();
 

@@ -4,10 +4,8 @@
 #include <sys/epoll.h>
 #include <unistd.h>
 
-#include <cstdint>
-#include <iostream>
+#include <algorithm>
 #include <memory>
-#include <stdexcept>
 
 #include "async/Poller.hpp"
 #include "utils/Logger.hpp"
@@ -35,23 +33,15 @@ void Server::run()
             client.handle_connection();
         });
 
+        // Remove disconnected clients
+        _clients.erase(std::remove_if(_clients.begin(),
+                                      _clients.end(),
+                                      [](const std::unique_ptr<Client>& client) {
+                                          return client->get_fd() == -1;
+                                      }),
+                       _clients.end());
+
         Poller::instance().poll();
     }
-}
-
-void Server::accept()
-{
-    /*Socket socket = _listen.accept();*/
-    /*_clients.emplace_back(std::make_unique<Client>(std::move(socket), *this, _elog));*/
-    /**/
-    /*Client& client = *(_clients.back());*/
-    /**/
-    /*EventHandler event(client.get_fd(),*/
-    /*                   std::bind(&Client::Readable::poll, &client),*/
-    /*                   std::bind(&Client::Writable::poll, &client));*/
-    /*this->add_event(event);*/
-    /**/
-    /*_elog.log(ErrorLogger::INFO, "Accepted connection from " +
-     * socket.get_address().to_string());*/
 }
 }  // namespace webserv::server

@@ -29,7 +29,5 @@ private:
     ErrorLogger& _elog;
 
     Clients _clients;
-
-    void accept();
 };
 }  // namespace webserv::server

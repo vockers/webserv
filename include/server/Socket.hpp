@@ -24,6 +24,9 @@ public:
     int     get_fd() const;
     Address get_address() const;
 
+    /// Closes the socket
+    void close();
+
     /// Assigns the address specified by `address` to the socket
     ///
     /// @param address The address to bind to the socket

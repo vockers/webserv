@@ -27,7 +27,7 @@ Socket::Socket(Address address, int fd) : _address(address), _fd(fd) {}
 
 Socket::~Socket()
 {
-    close(_fd);
+    ::close(_fd);
 }
 
 Socket::Socket(Socket&& other) : _address(other._address), _fd(other._fd)
@@ -43,6 +43,12 @@ int Socket::get_fd() const
 Address Socket::get_address() const
 {
     return _address;
+}
+
+void Socket::close()
+{
+    ::close(_fd);
+    _fd = -1;
 }
 
 void Socket::bind(Address address)

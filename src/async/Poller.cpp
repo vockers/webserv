@@ -49,12 +49,17 @@ void Poller::poll()
     }
 
     for (auto it = _blocking_promises.begin(); it != _blocking_promises.end();) {
-        Poll poll = (*it)->poll();
-        if (poll == Poll::READY) {
+        try {
+            Poll poll = (*it)->poll();
+            if (poll == Poll::READY) {
+                it = _blocking_promises.erase(it);
+                continue;
+            }
+        } catch (const std::exception& e) {
             it = _blocking_promises.erase(it);
-        } else {
-            ++it;
+            continue;
         }
+        ++it;
     }
 }
 
