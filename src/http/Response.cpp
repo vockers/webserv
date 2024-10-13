@@ -27,7 +27,23 @@ Response::Response(const Request& request, ErrorLogger& elog) : _content_length(
 
 Response::Response(StatusCode code, ErrorLogger& elog) : _content_length(0), _elog(elog)
 {
+    const std::string& code_str = code_to_string(code);
+    // clang-format off
+    std::string error_page =
+    "<!DOCTYPE html>"
+    "<html lang=\"en-US\"><head><meta charset=\"utf-8\" />"
+        "<head>"
+            "<title>" + code_str + "</title>"
+        "</head>"
+        "<body>"
+            "<h1 align=\"center\">" + code_str + "</h1>"
+            "<p align=\"center\">webserv</p>"
+        "</body>"
+    "</html>";
+    // clang-format on
+
     this->code(code);
+    this->body(error_page);
 }
 
 Response& Response::code(StatusCode code)
