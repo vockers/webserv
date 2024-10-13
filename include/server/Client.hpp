@@ -1,6 +1,9 @@
 #pragma once
 
+#include <expected>
+
 #include "http/Request.hpp"
+#include "http/Response.hpp"
 #include "server/Socket.hpp"
 #include "utils/Logger.hpp"
 
@@ -8,6 +11,7 @@ namespace webserv::server
 {
 using http::Request;
 /*using http::Response;*/
+using StatusCode = http::Response::StatusCode;
 using utils::ErrorLogger;
 
 class Server;
@@ -28,7 +32,7 @@ private:
     /// Asynchronously reads a request from the client
     ///
     /// @return The request as a promise
-    Promise<Request> read_request();
+    Promise<std::expected<Request, StatusCode>> read_request();
 
     Server&      _server;
     ErrorLogger& _elog;

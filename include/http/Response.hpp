@@ -26,6 +26,7 @@ public:
     };
 
     Response(const Request& request, ErrorLogger& elog);
+    Response(StatusCode, ErrorLogger& elog);
 
     Response& code(StatusCode code);
     Response& header(const std::string& key, const std::string& value);

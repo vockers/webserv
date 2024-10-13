@@ -3,8 +3,9 @@ SRC_DIR		= ./src
 INCLUDE_DIR	= ./include
 OBJ_DIR		= ./.obj
 
-CXX			= clang++
-CXXFLAGS	= -I$(INCLUDE_DIR) -std=c++20
+# TODO: Switch to clang++
+CXX			= g++
+CXXFLAGS	= -I$(INCLUDE_DIR) -std=c++23
 DEBUG_FLAGS	= -MMD -MP -g -fsanitize=address
 
 SRCS		= $(wildcard $(SRC_DIR)/*.cpp) $(wildcard $(SRC_DIR)/*/*.cpp)

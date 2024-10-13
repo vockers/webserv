@@ -12,7 +12,7 @@ namespace webserv::http
 {
 Response::Response(const Request& request, ErrorLogger& elog) : _content_length(0), _elog(elog)
 {
-    code(StatusCode::OK);
+    this->code(StatusCode::OK);
     elog.log("Request URI: " + request.get_uri());
 
     std::fstream file(std::string("www/default" + request.get_uri()),
@@ -22,7 +22,12 @@ Response::Response(const Request& request, ErrorLogger& elog) : _content_length(
     }
     std::stringstream ss;
     ss << file.rdbuf();
-    body(ss.str());
+    this->body(ss.str());
+}
+
+Response::Response(StatusCode code, ErrorLogger& elog) : _content_length(0), _elog(elog)
+{
+    this->code(code);
 }
 
 Response& Response::code(StatusCode code)
