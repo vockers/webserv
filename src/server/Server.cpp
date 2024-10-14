@@ -15,8 +15,11 @@ namespace webserv::server
 using async::Poller;
 using webserv::utils::ErrorLogger;
 
-Server::Server(const std::string& name, const std::string& address, int port, ErrorLogger& elog)
-    : _name(name), _listen(Address(address, port)), _elog(elog)
+Server::Server(const Config& config, ErrorLogger& elog)
+    : _name(config.server_name()),
+      _listen(Address("0.0.0.0", config.listen())),
+      _config(config),
+      _elog(elog)
 {
     _elog.log(ErrorLogger::INFO, "Listening on " + _listen.get_address().to_string());
 }
@@ -43,5 +46,10 @@ void Server::run()
 
         Poller::instance().poll();
     }
+}
+
+const Config& Server::get_config() const
+{
+    return _config;
 }
 }  // namespace webserv::server

@@ -1,6 +1,7 @@
 #include "config/Config.hpp"
 
 #include <fstream>
+#include <iostream>
 #include <memory>
 #include <optional>
 #include <sstream>
@@ -78,7 +79,7 @@ Config::Config(const std::string& file_path) : _name(""), _type(MAIN), _parent(n
     buffer << file.rdbuf();
 
     Parser parser(buffer.str());
-    *this = parser.parse();
+    parser.parse(*this);
 }
 
 Config::Config(const std::string& name, Type type, Config* parent)
@@ -86,7 +87,7 @@ Config::Config(const std::string& name, Type type, Config* parent)
 {
 }
 
-const Config* Config::operator[](Type type) const
+const Config* Config::get(Type type) const
 {
     for (const auto& child : _children) {
         if (child->get_type() == type) {
@@ -94,11 +95,60 @@ const Config* Config::operator[](Type type) const
         }
     }
 
+    if (_parent != nullptr) {
+        std::cout << "Parent: " << _parent->get_type() << std::endl;
+        return _parent->get(type);
+    }
+
+    return nullptr;
+}
+
+const Config& Config::operator[](Type type) const
+{
+    for (const auto& child : _children) {
+        if (child->get_type() == type) {
+            return *child.get();
+        }
+    }
+
     if (_parent) {
         return (*_parent)[type];
     }
 
-    return nullptr;
+    throw std::runtime_error("Config not found");
+}
+
+const std::string& Config::server_name() const
+{
+    return this->value<std::string>(SERVER_NAME, 0);
+}
+
+const std::string& Config::log_level() const
+{
+    return this->value<std::string>(LOG_LEVEL, 0);
+}
+
+const std::string& Config::error_page(int code) const
+{
+    const Config& error_page = (*this)[ERROR_PAGE];
+    if (error_page.get_parameters().size() == 1)
+        return this->value<std::string>(ERROR_PAGE, 0);
+
+    for (auto param = error_page.get_parameters().begin();
+         param != error_page.get_parameters().end() - 1;
+         ++param) {
+        if (std::get<int>(*param) == code) {
+            return std::get<std::string>(
+                error_page.get_parameters().at(error_page.get_parameters().size() - 1));
+        }
+    }
+
+    throw std::runtime_error("Error page not found");
+}
+
+int Config::listen() const
+{
+    return this->value<int>(LISTEN, 0);
 }
 
 Type Config::get_type() const

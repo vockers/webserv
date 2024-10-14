@@ -1,5 +1,6 @@
 #include "server/Client.hpp"
 
+#include "config/Config.hpp"
 #include "http/Response.hpp"
 #include "server/Server.hpp"
 
@@ -23,23 +24,21 @@ void Client::handle_connection()
     _response.clear();
 
     this->read_request().then([this](std::expected<Request, StatusCode> result) {
-        _elog.log(ErrorLogger::DEBUG, "Received request from " + get_address().to_string());
+        _elog.log("Received request from " + get_address().to_string());
 
         // Create a response and send it back to the client
         try {
-            if (result.has_value()) {
-                _response = Response(result.value(), _elog).str();
-            } else {
-                _response = Response(result.error(), _elog).str();
+            if (!result.has_value()) {
+                throw result.error();
             }
+            _response = Response(result.value(), _elog).str();
         } catch (StatusCode status_code) {
-            _response = Response(status_code, _elog).str();
+            _response = Response(status_code, _server.get_config(), _elog).str();
         }
         this->write(std::vector<char>(_response.begin(), _response.end()))
             .then([this](ssize_t bytes_written) {
-                _elog.log(ErrorLogger::DEBUG,
-                          "Sent response to " + get_address().to_string() + ": " +
-                              std::to_string(bytes_written) + " bytes");
+                _elog.log("Sent response to " + get_address().to_string() + ": " +
+                          std::to_string(bytes_written) + " bytes");
 
                 // Handle the next request and response
                 this->handle_connection();
@@ -60,9 +59,8 @@ Promise<std::expected<Request, StatusCode>> Client::read_request()
                 _request += std::string(_buffer.begin(), _buffer.begin() + bytes_read);
                 _buffer.clear();
 
-                _elog.log(ErrorLogger::DEBUG,
-                          "Received data from " + get_address().to_string() + ": " +
-                              std::to_string(bytes_read) + " bytes");
+                _elog.log("Received data from " + get_address().to_string() + ": " +
+                          std::to_string(bytes_read) + " bytes");
             });
 
             // Check if the request is complete, i.e. contains two CRLF sequences

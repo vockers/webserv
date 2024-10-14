@@ -3,11 +3,13 @@
 #include <sstream>
 #include <string>
 
+#include "config/Config.hpp"
 #include "http/Request.hpp"
 #include "utils/Logger.hpp"
 
 namespace webserv::http
 {
+using config::Config;
 using utils::ErrorLogger;
 
 class Request;
@@ -15,7 +17,7 @@ class Request;
 class Response : public std::stringstream
 {
 public:
-    enum class StatusCode
+    enum class StatusCode : int
     {
         OK                         = 200,
         BAD_REQUEST                = 400,
@@ -26,11 +28,13 @@ public:
     };
 
     Response(const Request& request, ErrorLogger& elog);
-    Response(StatusCode, ErrorLogger& elog);
+    Response(StatusCode code, const Config& config, ErrorLogger& elog);
 
     Response& code(StatusCode code);
+    Response& code(const std::string& code);
     Response& header(const std::string& key, const std::string& value);
     Response& body(const std::string& body);
+    Response& file(const std::string& path);
 
     ssize_t get_content_length() const;
 

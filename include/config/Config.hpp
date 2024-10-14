@@ -57,7 +57,9 @@ public:
     ///
     /// @param type The type of the directive
     /// @return The directive of the specified type or `nullptr` if it doesn't exist
-    const Config* operator[](Type type) const;
+    const Config* get(Type type) const;
+
+    const Config& operator[](Type type) const;
 
     /// @brief Get the value of a directive as `T`
     ///
@@ -66,9 +68,9 @@ public:
     /// @param col The index of the parameter
     /// @return The value of the directive as `T`
     template <typename T>
-    const T& get(Type type, size_t col) const
+    const T& value(Type type, size_t col) const
     {
-        const Config* directive = (*this)[type];
+        const Config* directive = this->get(type);
 
         if (directive == nullptr) {
             if (get_default_params(type).size() <= col) {
@@ -83,6 +85,12 @@ public:
 
         return std::get<T>(directive->get_parameters()[col]);
     }
+
+    const std::string& server_name() const;
+    const std::string& log_level() const;
+    const std::string& error_page(int code) const;
+
+    int listen() const;
 
     Type               get_type() const;
     const std::string& get_name() const;

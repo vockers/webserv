@@ -2,6 +2,7 @@
 
 #include <expected>
 
+#include "config/Config.hpp"
 #include "http/Request.hpp"
 #include "http/Response.hpp"
 #include "server/Socket.hpp"
@@ -9,6 +10,7 @@
 
 namespace webserv::server
 {
+using config::Config;
 using http::Request;
 /*using http::Response;*/
 using StatusCode = http::Response::StatusCode;

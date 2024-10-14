@@ -13,11 +13,11 @@ int main()
     try {
         Config config("conf/default.conf");
 
-        elog.set_level(config.get<std::string>(Config::LOG_LEVEL, 0));
+        elog.set_level(config.log_level());
 
         elog.log(ErrorLogger::INFO, "Starting webserv...");
 
-        Server server("server", "0.0.0.0", 8080, elog);
+        Server server(config[Config::HTTP][Config::SERVER], elog);
 
         server.run();
     } catch (const std::exception& e) {

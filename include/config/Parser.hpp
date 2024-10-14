@@ -14,7 +14,7 @@ public:
 
     Parser(const std::string& input);
 
-    Config parse();
+    void parse(Config& main);
 
 private:
     Token _next_token;
