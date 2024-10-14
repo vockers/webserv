@@ -23,7 +23,6 @@ private:
     /// Throws if the next token is not of type `type`
     ///
     /// @param type The expected token type
-    ///
     /// @return The token
     Token take_token(Token::Type type);
 

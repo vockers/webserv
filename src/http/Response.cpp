@@ -30,13 +30,13 @@ Response::Response(StatusCode code, const Config& config, ErrorLogger& elog)
         std::string error_page =
         "<!DOCTYPE html>\n"
         "<html lang=\"en-US\"><head><meta charset=\"utf-8\" />\n"
-            "<head>\n"
-                "<title>" + code_str + "</title>\n"
-            "</head>\n"
-            "<body>\n"
-                "<h1 align=\"center\">" + code_str + "</h1>\n"
-                "<p align=\"center\">webserv</p>\n"
-            "</body>\n"
+        "    <head>\n"
+        "        <title>" + code_str + "</title>\n"
+        "    </head>\n"
+        "    <body>\n"
+        "        <h1 align=\"center\">" + code_str + "</h1>\n"
+        "        <p align=\"center\">webserv</p>\n"
+        "    </body>\n"
         "</html>\n";
         // clang-format on
 

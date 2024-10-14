@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <map>
 #include <memory>
 #include <optional>
@@ -16,6 +17,7 @@ public:
     using Value      = std::variant<std::string, int, bool>;
     using Parameters = std::vector<Value>;
     using Directives = std::vector<std::shared_ptr<Config>>;
+    using ConfigList = std::vector<std::reference_wrapper<Config>>;
 
     enum Type : int
     {
@@ -59,7 +61,23 @@ public:
     /// @return The directive of the specified type or `nullptr` if it doesn't exist
     const Config* get(Type type) const;
 
+    /// @brief Get the directive of a specific type
+    ///
+    /// Searches for a directive of the specified type in the children of this directive.
+    /// If it doesn't exist, it will search in the parent of this directive, and so on.
+    ///
+    /// @param type The type of the directive
+    /// @return The directive of the specified type as reference
     const Config& operator[](Type type) const;
+
+    /// @brief Find all directives of a specific type
+    ///
+    /// Searches for all directives of the specified type in the children
+    /// of this directive and parent.
+    ///
+    /// @param type The type of the directive
+    /// @return A list of all directives of the specified type
+    ConfigList find(Type type) const;
 
     /// @brief Get the value of a directive as `T`
     ///
@@ -90,7 +108,9 @@ public:
     const std::string& log_level() const;
     const std::string& error_page(int code) const;
 
-    int listen() const;
+    int  listen() const;
+    bool autoindex() const;
+    int  client_max_body_size() const;
 
     Type               get_type() const;
     const std::string& get_name() const;

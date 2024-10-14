@@ -1,6 +1,5 @@
 #include "server/Client.hpp"
 
-#include "config/Config.hpp"
 #include "http/Response.hpp"
 #include "server/Server.hpp"
 

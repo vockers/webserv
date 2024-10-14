@@ -118,6 +118,24 @@ const Config& Config::operator[](Type type) const
     throw std::runtime_error("Config not found");
 }
 
+Config::ConfigList Config::find(Type type) const
+{
+    ConfigList list;
+
+    for (const auto& child : _children) {
+        if (child->get_type() == type) {
+            list.push_back(*child.get());
+        }
+    }
+
+    if (_parent) {
+        ConfigList parent_list = _parent->find(type);
+        list.insert(list.end(), parent_list.begin(), parent_list.end());
+    }
+
+    return list;
+}
+
 const std::string& Config::server_name() const
 {
     return this->value<std::string>(SERVER_NAME, 0);
@@ -130,16 +148,19 @@ const std::string& Config::log_level() const
 
 const std::string& Config::error_page(int code) const
 {
-    const Config& error_page = (*this)[ERROR_PAGE];
-    if (error_page.get_parameters().size() == 1)
-        return this->value<std::string>(ERROR_PAGE, 0);
+    ConfigList error_pages = this->find(ERROR_PAGE);
 
-    for (auto param = error_page.get_parameters().begin();
-         param != error_page.get_parameters().end() - 1;
-         ++param) {
-        if (std::get<int>(*param) == code) {
-            return std::get<std::string>(
-                error_page.get_parameters().at(error_page.get_parameters().size() - 1));
+    for (const Config& error_page : error_pages) {
+        if (error_page.get_parameters().size() == 1)
+            return this->value<std::string>(ERROR_PAGE, 0);
+
+        for (auto param = error_page.get_parameters().begin();
+             param != error_page.get_parameters().end() - 1;
+             ++param) {
+            if (std::get<int>(*param) == code) {
+                return std::get<std::string>(
+                    error_page.get_parameters().at(error_page.get_parameters().size() - 1));
+            }
         }
     }
 
@@ -149,6 +170,16 @@ const std::string& Config::error_page(int code) const
 int Config::listen() const
 {
     return this->value<int>(LISTEN, 0);
+}
+
+bool Config::autoindex() const
+{
+    return this->value<bool>(AUTOINDEX, 0);
+}
+
+int Config::client_max_body_size() const
+{
+    return this->value<int>(CLIENT_MAX_BODY_SIZE, 0);
 }
 
 Type Config::get_type() const
