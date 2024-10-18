@@ -3,7 +3,6 @@ FROM ubuntu:22.04
 # Install necessary dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
-    clang \
     libgtest-dev \
     googletest
 
@@ -14,7 +13,7 @@ WORKDIR /app
 COPY ../. .
 
 # Compile the source code
-RUN clang++ -std=c++20 -I./include -o test \
+RUN g++ -std=c++23 -I./include -o test \
     src/config/Config.cpp \
     src/config/Lexer.cpp \
     src/config/Parser.cpp \

@@ -15,15 +15,11 @@ Parser::Parser(const std::string& input) : _lexer(input)
     _next_token = _lexer.next_token();
 }
 
-Config Parser::parse()
+void Parser::parse(Config& main)
 {
-    Config main("", Type::MAIN);
-
     while (_next_token.type != Token::Type::NONE) {
         main.add_child(this->parse_directive(&main));
     }
-
-    return main;
 }
 
 Parser::Token Parser::take_token(Token::Type type)

@@ -25,7 +25,7 @@ const std::string Token::type_to_string(Token::Type type)
     case Token::Type::BLOCK_END:
         return "}";
         break;
-    case Token::Type::NONE:
+    default:
         return "EOF";
         break;
     }
