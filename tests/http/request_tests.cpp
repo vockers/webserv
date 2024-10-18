@@ -1,8 +1,10 @@
 #include <gtest/gtest.h>
 
 #include "http/Request.hpp"
+#include "http/Response.hpp"
 
 using namespace webserv::http;
+using StatusCode = Response::StatusCode;
 
 #define EXPECT_THROW_VALUE(expr, type, exception) \
     try {                             \
@@ -32,16 +34,16 @@ TEST(RequestTests, RequestTest)
 
 TEST(RequestTests, InvalidMethodTest)
 {
-    EXPECT_THROW_VALUE(Request("INVALID /index.html HTTP/1.1\r\n\r\n"), int, 501);
+    EXPECT_THROW_VALUE(Request("INVALID /index.html HTTP/1.1\r\n\r\n"), StatusCode, StatusCode::NOT_IMPLEMENTED);
 }
 
 TEST(RequestTests, InvalidVersionTest)
 {
-    EXPECT_THROW_VALUE(Request("GET /index.html HTTP/1.0\r\n\r\n"), int, 505);
+    EXPECT_THROW_VALUE(Request("GET /index.html HTTP/1.0\r\n\r\n"), StatusCode, StatusCode::HTTP_VERSION_NOT_SUPPORTED);
 }
 
 TEST(RequestTests, BadRequestTest)
 {
-    EXPECT_THROW_VALUE(Request("GET /index.html HTTP/1.1"), int, 400);
-    EXPECT_THROW_VALUE(Request("GET /index.html HTTP/1.1\r\n"), int, 400);
+    EXPECT_THROW_VALUE(Request("GET /index.html HTTP/1.1"), StatusCode, StatusCode::BAD_REQUEST);
+    EXPECT_THROW_VALUE(Request("GET /index.html HTTP/1.1\r\n"), StatusCode, StatusCode::BAD_REQUEST);
 }

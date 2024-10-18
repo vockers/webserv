@@ -8,8 +8,8 @@ using Type = Config::Type;
 TEST(ParserTests, ParseEmptyConfig)
 {
     Parser parser("");
-
-    auto config = parser.parse();
+    Config config("", Config::MAIN);
+    parser.parse(config);
 
     EXPECT_EQ(config.get_type(), Config::MAIN);
     EXPECT_EQ(config.get_parameters().size(), 0);
@@ -19,20 +19,24 @@ TEST(ParserTests, ParseEmptyConfig)
 TEST(ParserTests, ParseSingleDirective)
 {
     Parser parser("log_level debug;");
+    Config config("", Config::MAIN);
+    parser.parse(config);
 
-    auto config = *parser.parse().get_children()[0];
+    auto log_level = *config.get_children()[0];
 
-    EXPECT_EQ(config.get_type(), Config::LOG_LEVEL);
-    EXPECT_EQ(config.get_parameters().size(), 1);
-    EXPECT_EQ(std::get<std::string>(config.get_parameters()[0]), "debug");
-    EXPECT_EQ(config.get_children().size(), 0);
+    EXPECT_EQ(log_level.get_type(), Config::LOG_LEVEL);
+    EXPECT_EQ(log_level.get_parameters().size(), 1);
+    EXPECT_EQ(std::get<std::string>(log_level.get_parameters()[0]), "debug");
+    EXPECT_EQ(log_level.get_children().size(), 0);
 }
 
 TEST(ParserTests, ParseSingleDirectiveWithChildren)
 {
     Parser parser("http { root /www; }");
+    Config config("", Config::MAIN);
+    parser.parse(config);
 
-    auto http = *parser.parse().get_children()[0];
+    auto http = *config.get_children()[0];
 
     EXPECT_EQ(http.get_type(), Type::HTTP);
     EXPECT_EQ(http.get_parameters().size(), 0);
@@ -48,8 +52,10 @@ TEST(ParserTests, ParseSingleDirectiveWithChildren)
 TEST(ParserTests, ParseSingleDirectiveWithMultipleChildren)
 {
     Parser parser("http { root /www; autoindex on; }");
+    Config config("", Config::MAIN);
+    parser.parse(config);
 
-    auto http = *parser.parse().get_children()[0];
+    auto http = *config.get_children()[0];
 
     EXPECT_EQ(http.get_type(), Type::HTTP);
     EXPECT_EQ(http.get_parameters().size(), 0);
@@ -71,8 +77,8 @@ TEST(ParserTests, ParseSingleDirectiveWithMultipleChildren)
 TEST(ParserTests, ParseMultipleDirectives)
 {
     Parser parser("log_level debug; http { root /www; }");
-
-    auto config = parser.parse();
+    Config config("", Config::MAIN);
+    parser.parse(config);
 
     EXPECT_EQ(config.get_type(), Type::MAIN);
     EXPECT_EQ(config.get_parameters().size(), 0);
@@ -99,8 +105,10 @@ TEST(ParserTests, ParseMultipleDirectives)
 TEST(ParserTests, ParseNestedDirectives)
 {
     Parser parser("http { server { listen 80; } }");
+    Config config("", Config::MAIN);
+    parser.parse(config);
 
-    auto http = *parser.parse().get_children()[0];
+    auto http = *config.get_children()[0];
 
     EXPECT_EQ(http.get_type(), Type::HTTP);
     EXPECT_EQ(http.get_parameters().size(), 0);
@@ -121,8 +129,10 @@ TEST(ParserTests, ParseNestedDirectives)
 TEST(ParserTests, ParseSameDirectives)
 {
     Parser parser("http { server { listen 80; listen 443; } }");
+    Config config("", Config::MAIN);
+    parser.parse(config);
 
-    auto http = *parser.parse().get_children()[0];
+    auto http = *config.get_children()[0];
 
     EXPECT_EQ(http.get_type(), Type::HTTP);
     EXPECT_EQ(http.get_parameters().size(), 0);
@@ -152,63 +162,72 @@ TEST(ParserTests, ParseSameDirectives)
 TEST(ParserTests, ParseMissingBracket)
 {
     Parser parser("http { server { listen 80; }");
+    Config config("", Config::MAIN);
 
-    EXPECT_THROW(parser.parse(), std::runtime_error);
+    EXPECT_THROW(parser.parse(config);, std::runtime_error);
 }
 
 // Unallowed directive tests
 TEST(ParserTests, ParseUnallowedDirective)
 {
+    Config config("", Config::MAIN);
+
     Parser parser(" unallowed_directive; ");
-    EXPECT_THROW(parser.parse(), std::runtime_error);
+    EXPECT_THROW(parser.parse(config), std::runtime_error);
 
     Parser parser2("http { unallowed_directive; }");
-    EXPECT_THROW(parser2.parse(), std::runtime_error);
+    EXPECT_THROW(parser.parse(config), std::runtime_error);
 
     Parser parser3("http { server { unallowed_directive; } }");
-    EXPECT_THROW(parser3.parse(), std::runtime_error);
+    EXPECT_THROW(parser3.parse(config), std::runtime_error);
 
     Parser parser4(" unallowed_directive { log_level debug; } ");
-    EXPECT_THROW(parser4.parse(), std::runtime_error);
+    EXPECT_THROW(parser4.parse(config), std::runtime_error);
 }
 
 // Test unique directive
 TEST(ParserTests, ParseUniqueDirective)
 {
+    Config config("", Config::MAIN);
+
     Parser parser("http { log_level debug; log_level info; }");
-    EXPECT_THROW(parser.parse(), std::runtime_error);
+    EXPECT_THROW(parser.parse(config), std::runtime_error);
 
     Parser parser2("http { server { log_level debug; log_level info; } }");
-    EXPECT_THROW(parser2.parse(), std::runtime_error);
+    EXPECT_THROW(parser2.parse(config), std::runtime_error);
 
     Parser parser3("log_level debug; log_level info;");
-    EXPECT_THROW(parser3.parse(), std::runtime_error);
+    EXPECT_THROW(parser3.parse(config), std::runtime_error);
 }
 
 // Test minimum number of parameters
 TEST(ParserTests, ParseMinParams)
 {
+    Config config("", Config::MAIN);
+
     Parser parser("http { server { listen; } }");
-    EXPECT_THROW(parser.parse(), std::runtime_error);
+    EXPECT_THROW(parser.parse(config), std::runtime_error);
 
     Parser parser2("http { server { listen 80; location; } }");
-    EXPECT_THROW(parser2.parse(), std::runtime_error);
+    EXPECT_THROW(parser2.parse(config), std::runtime_error);
 
     Parser parser3("http { server { listen 80; location /; } }");
-    EXPECT_NO_THROW(parser3.parse());
+    EXPECT_NO_THROW(parser3.parse(config));
 }
 
 // Test unique directive
 TEST(ParserTests, ParseMaxParams)
 {
+    Config config("", Config::MAIN);
+
     Parser parser("http { server { index index.html; index hello.html; } }");
-    EXPECT_THROW(parser.parse(), std::runtime_error);
+    EXPECT_THROW(parser.parse(config), std::runtime_error);
 
     Parser parser2("http { server { autoindex on; autoindex on; } }");
-    EXPECT_THROW(parser2.parse(), std::runtime_error);
+    EXPECT_THROW(parser2.parse(config), std::runtime_error);
 
     Parser parser3("http { server { location / { limit_except GET; limit_except POST; } } }");
-    EXPECT_THROW(parser3.parse(), std::runtime_error);
+    EXPECT_THROW(parser3.parse(config), std::runtime_error);
 }
 
 /*

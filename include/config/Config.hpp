@@ -105,6 +105,8 @@ public:
     }
 
     const std::string& server_name() const;
+    const std::string& root() const;
+    const std::string& index() const;
     const std::string& log_level() const;
     const std::string& error_page(int code) const;
 

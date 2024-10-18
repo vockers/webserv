@@ -96,7 +96,6 @@ const Config* Config::get(Type type) const
     }
 
     if (_parent != nullptr) {
-        std::cout << "Parent: " << _parent->get_type() << std::endl;
         return _parent->get(type);
     }
 
@@ -139,6 +138,16 @@ Config::ConfigList Config::find(Type type) const
 const std::string& Config::server_name() const
 {
     return this->value<std::string>(SERVER_NAME, 0);
+}
+
+const std::string& Config::root() const
+{
+    return this->value<std::string>(ROOT, 0);
+}
+
+const std::string& Config::index() const
+{
+    return this->value<std::string>(INDEX, 0);
 }
 
 const std::string& Config::log_level() const
