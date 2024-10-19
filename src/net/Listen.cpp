@@ -1,11 +1,11 @@
-#include "server/Listen.hpp"
+#include "net/Listen.hpp"
 
 #include <fcntl.h>
 #include <sys/socket.h>
 
 #include <stdexcept>
 
-namespace webserv::server
+namespace webserv::net
 {
 using async::Event;
 
@@ -38,4 +38,4 @@ Promise<Socket> Listen::accept()
         _fd,
         Event::READABLE);
 }
-}  // namespace webserv::server
+}  // namespace webserv::net

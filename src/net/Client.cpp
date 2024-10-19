@@ -1,9 +1,9 @@
-#include "server/Client.hpp"
+#include "net/Client.hpp"
 
 #include "http/Response.hpp"
-#include "server/Server.hpp"
+#include "net/Server.hpp"
 
-namespace webserv::server
+namespace webserv::net
 {
 using http::Response;
 
@@ -74,4 +74,4 @@ Promise<std::expected<Request, StatusCode>> Client::read_request()
             return std::nullopt;
         });
 }
-}  // namespace webserv::server
+}  // namespace webserv::net

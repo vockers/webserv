@@ -1,8 +1,8 @@
-#include "server/Address.hpp"
+#include "net/Address.hpp"
 
 #include <arpa/inet.h>
 
-namespace webserv::server
+namespace webserv::net
 {
 Address::Address() : _port(0)
 {
@@ -40,4 +40,4 @@ std::string Address::to_string() const
     inet_ntop(AF_INET, &_addr.sin_addr, buffer, INET_ADDRSTRLEN);
     return std::string(buffer) + ":" + std::to_string(_port);
 }
-}  // namespace webserv::server
+}  // namespace webserv::net

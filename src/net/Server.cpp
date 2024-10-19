@@ -1,4 +1,4 @@
-#include "server/Server.hpp"
+#include "net/Server.hpp"
 
 #include <fcntl.h>
 #include <sys/epoll.h>
@@ -10,7 +10,7 @@
 #include "async/Poller.hpp"
 #include "utils/Logger.hpp"
 
-namespace webserv::server
+namespace webserv::net
 {
 using async::Poller;
 using webserv::utils::ErrorLogger;
@@ -52,4 +52,4 @@ const Config& Server::get_config() const
 {
     return _config;
 }
-}  // namespace webserv::server
+}  // namespace webserv::net

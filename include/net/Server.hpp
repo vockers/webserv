@@ -5,11 +5,11 @@
 #include <vector>
 
 #include "config/Config.hpp"
-#include "server/Client.hpp"
-#include "server/Listen.hpp"
+#include "net/Client.hpp"
+#include "net/Listen.hpp"
 #include "utils/Logger.hpp"
 
-namespace webserv::server
+namespace webserv::net
 {
 using config::Config;
 using utils::ErrorLogger;
@@ -35,4 +35,4 @@ private:
     Listen      _listen;
     Clients     _clients;
 };
-}  // namespace webserv::server
+}  // namespace webserv::net

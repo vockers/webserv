@@ -1,4 +1,4 @@
-#include "server/Socket.hpp"
+#include "net/Socket.hpp"
 
 #include <sys/socket.h>
 #include <unistd.h>
@@ -9,7 +9,7 @@
 #define BUFFER_SIZE 4096
 #endif
 
-namespace webserv::server
+namespace webserv::net
 {
 using async::Event;
 
@@ -97,4 +97,4 @@ Promise<ssize_t> Socket::write(const std::vector<char>& buffer)
         _fd,
         Event::WRITABLE);
 }
-}  // namespace webserv::server
+}  // namespace webserv::net

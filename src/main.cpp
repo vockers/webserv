@@ -1,9 +1,9 @@
 #include "config/Config.hpp"
-#include "server/Server.hpp"
+#include "net/Server.hpp"
 #include "utils/Logger.hpp"
 
 using webserv::config::Config;
-using webserv::server::Server;
+using webserv::net::Server;
 using webserv::utils::ErrorLogger;
 
 int main()
