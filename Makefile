@@ -39,6 +39,10 @@ test:
 	@docker build -t webserv-tests -f ./tests/Dockerfile .
 	docker run -it webserv-tests
 
+e2e:
+	@docker build -t webserv-e2e_tests -f ./tests/e2e/Dockerfile .
+	docker run -it webserv-e2e_tests
+
 format:
 	@clang-format -i $(SRCS) $(wildcard $(INCLUDE_DIR)/*/*.hpp) $(wildcard $(INCLUDE_DIR)/*/*.hpp)
 

@@ -24,7 +24,7 @@ RUN python3 -m venv venv && \
     source venv/bin/activate && \
     pip install requests pytest
 
-RUN chmod +x tests/run-tests.sh
+RUN chmod +x tests/e2e/run-tests.sh
 
 # Run the tests
-CMD ["./tests/run-tests.sh"]
+CMD ["./tests/e2e/run-tests.sh"]

@@ -5,18 +5,46 @@
 
 #include <fstream>
 #include <stdexcept>
-#include <unordered_map>
 
 #include "http/Request.hpp"
 
 namespace webserv::http
 {
+// clang-format off
+const std::unordered_map<std::string, std::string> Response::CONTENT_TYPES = {
+    {"html",      "text/html"},
+    {"txt",      "text/plain"},
+
+    {"xml", "application/xml"},
+    {"x-www-form-urlencoded", "application/x-www-form-urlencoded"},
+
+    {"jpeg",     "image/jpeg"},
+    {"jpg",       "image/jpg"},
+    {"png",       "image/png"},
+    {"gif",       "image/gif"},
+    {"ico",    "image/x-icon"},
+
+    {"mpeg",     "audio/mpeg"},
+    {"ogg",       "audio/ogg"},
+
+    {"mp4",       "video/mp4"},
+    {"webm",     "video/webm"},
+
+    {"form-data", "multipart/form-data"},
+};
+// clang-format on
+
 Response::Response(const Request& request, const Config& config, ErrorLogger& elog)
     : _content_length(0), _elog(elog)
 {
     this->code(StatusCode::OK);
     const Config& location = config.location(request.get_uri());
-    this->file(location.root() + request.get_uri());
+    std::string   uri      = location.root() + request.get_uri();
+    if (uri.ends_with("/")) {
+        uri += location.index();
+        // TODO: Check autoindex if index file not found
+    }
+    this->file(uri);
 }
 
 Response::Response(StatusCode code, const Config& config, ErrorLogger& elog)
@@ -82,8 +110,18 @@ Response& Response::file(const std::string& path)
     ss << file.rdbuf();
     file.close();
 
+    this->content_type(path.substr(path.find_last_of('.') + 1));
     this->body(ss.str());
 
+    return *this;
+}
+
+Response& Response::content_type(const std::string& extension)
+{
+    auto it = CONTENT_TYPES.find(extension);
+    if (it != CONTENT_TYPES.end()) {
+        this->header("Content-Type", it->second);
+    }
     return *this;
 }
 

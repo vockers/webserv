@@ -1,7 +1,7 @@
 #!/bin/bash
 
-./webserv ./tests/e2e.conf > /dev/null 2>&1 &
+./webserv ./tests/conf/e2e.conf > /dev/null 2>&1 &
 
 source venv/bin/activate
 
-pytest tests/all-tests.py
+pytest tests/e2e/all-tests.py
