@@ -25,8 +25,13 @@ TEST(ConfigTests, ConfigTest)
 
     EXPECT_EQ(server.server_name(), "localhost");
     EXPECT_EQ(server.listen(), 8080);
-    EXPECT_EQ(server.root(), "/www");
     EXPECT_EQ(server.error_page(404), "/404.html");
+
+    auto& location = server.location("/l");
+    EXPECT_EQ(location.root(), "/www");
+
+    auto& error_location = server.location("/e/404.html");
+    EXPECT_EQ(error_location.root(), "/www/errors");
 }
 
 TEST(ConfigTests, DefaultValues)

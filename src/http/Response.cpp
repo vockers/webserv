@@ -11,10 +11,12 @@
 
 namespace webserv::http
 {
-Response::Response(const Request& request, ErrorLogger& elog) : _content_length(0), _elog(elog)
+Response::Response(const Request& request, const Config& config, ErrorLogger& elog)
+    : _content_length(0), _elog(elog)
 {
     this->code(StatusCode::OK);
-    this->file("www/default" + request.get_uri());
+    const Config& location = config.location(request.get_uri());
+    this->file(location.root() + request.get_uri());
 }
 
 Response::Response(StatusCode code, const Config& config, ErrorLogger& elog)
@@ -23,7 +25,8 @@ Response::Response(StatusCode code, const Config& config, ErrorLogger& elog)
     try {
         std::string error_page_path = config.error_page(static_cast<int>(code));
         this->code(code);
-        this->file("www/default" + error_page_path);
+        const Config& location = config.location(error_page_path);
+        this->file(location.root() + error_page_path);
     } catch (const std::runtime_error& e) {
         const std::string& code_str = code_to_string(code);
         // clang-format off

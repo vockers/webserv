@@ -104,6 +104,8 @@ public:
         return std::get<T>(directive->get_parameters()[col]);
     }
 
+    const Config& location(const std::string& uri) const;
+
     const std::string& server_name() const;
     const std::string& root() const;
     const std::string& index() const;
