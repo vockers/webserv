@@ -3,9 +3,9 @@
 #include <memory>
 
 #include "async/Promise.hpp"
-#include "server/Socket.hpp"
+#include "net/Socket.hpp"
 
-namespace webserv::server
+namespace webserv::net
 {
 /// A socket that listens for incoming connections.
 class Listen : public Socket
@@ -24,4 +24,4 @@ public:
     /// @return Socket of the accepted connection.
     Promise<Socket> accept();
 };
-}  // namespace webserv::server
+}  // namespace webserv::net

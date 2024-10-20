@@ -3,9 +3,9 @@
 #include <vector>
 
 #include "async/Promise.hpp"
-#include "server/Address.hpp"
+#include "net/Address.hpp"
 
-namespace webserv::server
+namespace webserv::net
 {
 using async::Promise;
 
@@ -48,4 +48,4 @@ protected:
     Address _address;
     int     _fd;
 };
-}  // namespace webserv::server
+}  // namespace webserv::net

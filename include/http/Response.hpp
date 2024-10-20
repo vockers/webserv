@@ -27,7 +27,7 @@ public:
         HTTP_VERSION_NOT_SUPPORTED = 505,
     };
 
-    Response(const Request& request, ErrorLogger& elog);
+    Response(const Request& request, const Config& config, ErrorLogger& elog);
     Response(StatusCode code, const Config& config, ErrorLogger& elog);
 
     Response& code(StatusCode code);

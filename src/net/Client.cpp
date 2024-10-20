@@ -1,9 +1,9 @@
-#include "server/Client.hpp"
+#include "net/Client.hpp"
 
 #include "http/Response.hpp"
-#include "server/Server.hpp"
+#include "net/Server.hpp"
 
-namespace webserv::server
+namespace webserv::net
 {
 using http::Response;
 
@@ -30,7 +30,7 @@ void Client::handle_connection()
             if (!result.has_value()) {
                 throw result.error();
             }
-            _response = Response(result.value(), _elog).str();
+            _response = Response(result.value(), _server.get_config(), _elog).str();
         } catch (StatusCode status_code) {
             _response = Response(status_code, _server.get_config(), _elog).str();
         }
@@ -74,4 +74,4 @@ Promise<std::expected<Request, StatusCode>> Client::read_request()
             return std::nullopt;
         });
 }
-}  // namespace webserv::server
+}  // namespace webserv::net

@@ -5,10 +5,10 @@
 #include "config/Config.hpp"
 #include "http/Request.hpp"
 #include "http/Response.hpp"
-#include "server/Socket.hpp"
+#include "net/Socket.hpp"
 #include "utils/Logger.hpp"
 
-namespace webserv::server
+namespace webserv::net
 {
 using config::Config;
 using http::Request;
@@ -43,4 +43,4 @@ private:
     std::string       _request;
     std::string       _response;
 };
-}  // namespace webserv::server
+}  // namespace webserv::net
