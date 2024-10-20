@@ -30,7 +30,7 @@ void Client::handle_connection()
             if (!result.has_value()) {
                 throw result.error();
             }
-            _response = Response(result.value(), _elog).str();
+            _response = Response(result.value(), _server.get_config(), _elog).str();
         } catch (StatusCode status_code) {
             _response = Response(status_code, _server.get_config(), _elog).str();
         }

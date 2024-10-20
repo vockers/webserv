@@ -37,7 +37,7 @@ const Config::Constraint Config::CONSTRAINTS[] = {
     {{}},                                        // MAIN
     {{MAIN}, true, nullopt, 0},                  // HTTP
     {{HTTP}, false, nullopt, 0},                 // SERVER
-    {{SERVER, LOCATION}, false, 1},              // LOCATION
+    {{SERVER}, false, 1},                        // LOCATION
     {{SERVER}, false, 1},                        // SERVER_NAME
     {{SERVER}, false, 1},                        // LISTEN
     {{HTTP, SERVER, LOCATION}, true, 1, 1},      // ROOT
@@ -133,6 +133,23 @@ Config::ConfigList Config::find(Type type) const
     }
 
     return list;
+}
+
+const Config& Config::location(const std::string& uri) const
+{
+    for (const auto& child : _children) {
+        if (child->get_type() == LOCATION) {
+            for (const auto& param : child->get_parameters()) {
+                std::string param_name = std::get<std::string>(param);
+                if (param_name == uri ||
+                    (param_name.ends_with("/") && uri.starts_with(param_name))) {
+                    return *child.get();
+                }
+            }
+        }
+    }
+
+    return *this;
 }
 
 const std::string& Config::server_name() const
