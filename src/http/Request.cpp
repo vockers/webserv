@@ -88,5 +88,10 @@ void Request::parse_headers(const std::string& headers)
 
         _headers[key] = value;
     }
+
+    // Host header is mandatory
+    if (_headers.find("Host") == _headers.end()) {
+        throw StatusCode::BAD_REQUEST;
+    }
 }
 }  // namespace webserv::http

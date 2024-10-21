@@ -70,3 +70,11 @@ def test_bad_request():
 
     assert response.status_code == 400
     assert response.headers['Content-Type'] == 'text/html'
+
+def test_missing_host():
+    req = b"GET / HTTP/1.1\r\n\r\n"
+
+    response = requests_raw.raw(url=BASE_URL, data=req)
+
+    assert response.status_code == 400
+    assert response.headers['Content-Type'] == 'text/html'
