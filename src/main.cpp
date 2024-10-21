@@ -6,12 +6,14 @@ using webserv::config::Config;
 using webserv::net::Server;
 using webserv::utils::ErrorLogger;
 
-int main()
+int main(int argc, char** argv)
 {
     ErrorLogger elog(ErrorLogger::INFO);
 
+    const std::string& config_path = argc > 1 ? argv[1] : "conf/default.conf";
+
     try {
-        Config config("conf/default.conf");
+        Config config(config_path);
 
         elog.set_level(config.log_level());
 

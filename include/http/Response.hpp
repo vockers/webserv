@@ -2,6 +2,7 @@
 
 #include <sstream>
 #include <string>
+#include <unordered_map>
 
 #include "config/Config.hpp"
 #include "http/Request.hpp"
@@ -35,9 +36,22 @@ public:
     Response& header(const std::string& key, const std::string& value);
     Response& body(const std::string& body);
     Response& file(const std::string& path);
+    Response& content_type(const std::string& extension);
 
     ssize_t get_content_length() const;
 
+    static const std::unordered_map<std::string, std::string> CONTENT_TYPES;
+
+    /// @brief Maps file extension to content type (MIME type)
+    ///
+    /// @param extension File extension
+    /// @return Content type (MIME type)
+    static const std::string& get_content_type(const std::string& extension);
+
+    /// @brief Maps status code to its string representation
+    ///
+    /// @param code Status code
+    /// @return String representation of the status code
     static const std::string& code_to_string(StatusCode code);
 
 private:
