@@ -22,7 +22,7 @@ RUN make all
 # Setup Python environment
 RUN python3 -m venv venv && \
     source venv/bin/activate && \
-    pip install requests pytest
+    pip install requests pytest requests-raw
 
 RUN chmod +x tests/e2e/run-tests.sh
 

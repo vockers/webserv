@@ -13,6 +13,8 @@ namespace webserv::http
 // clang-format off
 const std::unordered_map<std::string, std::string> Response::CONTENT_TYPES = {
     {"html",      "text/html"},
+    {"css",        "text/css"},
+    {"js",  "text/javascript"},
     {"txt",      "text/plain"},
 
     {"xml", "application/xml"},
@@ -55,7 +57,7 @@ Response::Response(StatusCode code, const Config& config, ErrorLogger& elog)
         this->code(code);
         const Config& location = config.location(error_page_path);
         this->file(location.root() + error_page_path);
-    } catch (const std::runtime_error& e) {
+    } catch (...) {
         const std::string& code_str = code_to_string(code);
         // clang-format off
         std::string error_page =
@@ -72,6 +74,7 @@ Response::Response(StatusCode code, const Config& config, ErrorLogger& elog)
         // clang-format on
 
         this->code(code_str);
+        this->content_type("html");
         this->body(error_page);
     }
 }
@@ -118,16 +121,26 @@ Response& Response::file(const std::string& path)
 
 Response& Response::content_type(const std::string& extension)
 {
-    auto it = CONTENT_TYPES.find(extension);
-    if (it != CONTENT_TYPES.end()) {
-        this->header("Content-Type", it->second);
-    }
+    this->header("Content-Type", get_content_type(extension));
+
     return *this;
 }
 
 ssize_t Response::get_content_length() const
 {
     return _content_length;
+}
+
+const std::string& Response::get_content_type(const std::string& extension)
+{
+    static const std::string DEFAULT_CONTENT_TYPE = "text/plain";
+
+    auto it = CONTENT_TYPES.find(extension);
+    if (it != CONTENT_TYPES.end()) {
+        return it->second;
+    } else {
+        return DEFAULT_CONTENT_TYPE;
+    }
 }
 
 const std::string& Response::code_to_string(StatusCode code)
