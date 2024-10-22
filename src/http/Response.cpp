@@ -5,8 +5,10 @@
 
 #include <fstream>
 #include <stdexcept>
+#include <iostream>
 
 #include "http/Request.hpp"
+#include "http/Cgi.hpp"
 
 namespace webserv::http
 {
@@ -46,7 +48,17 @@ Response::Response(const Request& request, const Config& config, ErrorLogger& el
         uri += location.index();
         // TODO: Check autoindex if index file not found
     }
-    this->file(uri);
+
+	std::string interpreter;
+
+	if (Cgi::is_cgi_request(uri, interpreter)) {
+		Cgi cgi(request, uri, interpreter, elog);
+		this->content_type("html");
+		this->body(cgi.get_output());
+	} 
+	else {
+   		this->file(uri);
+	}
 }
 
 Response::Response(StatusCode code, const Config& config, ErrorLogger& elog)

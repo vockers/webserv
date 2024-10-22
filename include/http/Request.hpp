@@ -21,6 +21,7 @@ public:
 
     Method             get_method() const;
     const std::string& get_uri() const;
+	const std::string& get_query() const;
     const Headers&     get_headers() const;
 
 private:
@@ -28,6 +29,7 @@ private:
 
     Method      _method;
     std::string _uri;
+	std::string _query;
     Headers     _headers;
 
     void parse_line(const std::string& line);

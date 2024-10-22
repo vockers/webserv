@@ -1,6 +1,7 @@
 #include "http/Request.hpp"
 
 #include <sstream>
+#include <iostream>
 
 #include "http/Response.hpp"
 
@@ -46,6 +47,11 @@ const std::string& Request::get_uri() const
     return _uri;
 }
 
+const std::string& Request::get_query() const
+{
+	return _query;
+}
+
 void Request::parse_line(const std::string& line)
 {
     std::stringstream line_stream(line);
@@ -66,6 +72,17 @@ void Request::parse_line(const std::string& line)
     if (version != "HTTP/1.1") {
         throw StatusCode::HTTP_VERSION_NOT_SUPPORTED;
     }
+
+	size_t query_pos = _uri.find('?');
+	if (query_pos != std::string::npos) {
+		_query = _uri.substr(query_pos + 1);
+		_uri = _uri.substr(0, query_pos);
+	}
+	else {
+		_query.clear();
+	}
+	std::cout << "URI: " << _uri << std::endl;
+	std::cout << "Query: " << _query << std::endl;
 }
 
 void Request::parse_headers(const std::string& headers)
