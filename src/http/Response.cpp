@@ -4,8 +4,10 @@
 #include <unistd.h>
 
 #include <fstream>
+#include <iostream>
 #include <stdexcept>
 
+#include "http/CGI.hpp"
 #include "http/Request.hpp"
 
 namespace webserv::http
@@ -46,7 +48,19 @@ Response::Response(const Request& request, const Config& config, ErrorLogger& el
         uri += location.index();
         // TODO: Check autoindex if index file not found
     }
-    this->file(uri);
+
+    std::string interpreter;
+    if (CGI::is_cgi_request(uri, interpreter)) {
+        try {
+            CGI cgi(request, uri, interpreter);
+            this->content_type("html");
+            this->body(cgi.get_output());
+        } catch (StatusCode status_code) {
+            throw status_code;
+        }
+    } else {
+        this->file(uri);
+    }
 }
 
 Response::Response(StatusCode code, const Config& config, ErrorLogger& elog)
@@ -149,6 +163,7 @@ const std::string& Response::code_to_string(StatusCode code)
     static const std::unordered_map<StatusCode, std::string>  STATUS_CODES = {
         { StatusCode::OK, "200 OK" },
         { StatusCode::BAD_REQUEST, "400 Bad Request" },
+		{ StatusCode::FORBIDDEN, "403 Forbidden" },
         { StatusCode::NOT_FOUND, "404 Not Found" },
         { StatusCode::INTERNAL_SERVER_ERROR, "500 Internal Server Error" },
         { StatusCode::NOT_IMPLEMENTED, "501 Not Implemented" },

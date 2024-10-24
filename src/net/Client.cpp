@@ -1,5 +1,8 @@
 #include "net/Client.hpp"
 
+#include <iostream>
+
+#include "http/CGI.hpp"
 #include "http/Response.hpp"
 #include "net/Server.hpp"
 #include "net/VirtualServer.hpp"
@@ -23,9 +26,8 @@ void Client::handle_connection()
     _request.clear();
     _response.clear();
 
+    _elog.log(ErrorLogger::DEBUG, "Handling connection from " + get_address().to_string());
     this->read_request().then([this](std::expected<Request, StatusCode> result) {
-        _elog.log("Received request from " + get_address().to_string());
-
         // Create a response and send it back to the client
         try {
             if (!result.has_value()) {
