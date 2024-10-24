@@ -7,14 +7,25 @@
 
 namespace webserv::http
 {
-using utils::ErrorLogger;  // inside or outside of the class?
+using utils::ErrorLogger;
 
-class Cgi
+class CGI
 {
 public:
-    Cgi(const Request& request, const std::string& uri, const std::string& interpreter);
+    /// @brief Creates a new process to execute the CGI script
+	///
+    /// @param request the request object
+    /// @param uri path of the request
+    /// @param interpreter path to the interpreter
+    CGI(const Request& request, const std::string& uri, const std::string& interpreter);
 
     std::string get_output() const;
+
+    /// @brief Checks if the request is a CGI request and sets the interpreter
+    ///
+	/// @param uri path of the request
+    /// @param interpreter path to the interpreter
+    /// @return true if the request is a CGI request, false otherwise
     static bool is_cgi_request(const std::string& uri, std::string& interpreter);
 
 private:

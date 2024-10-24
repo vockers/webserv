@@ -50,9 +50,9 @@ Response::Response(const Request& request, const Config& config, ErrorLogger& el
     }
 
     std::string interpreter;
-    if (Cgi::is_cgi_request(uri, interpreter)) {
+    if (CGI::is_cgi_request(uri, interpreter)) {
         try {
-            Cgi cgi(request, uri, interpreter);
+            CGI cgi(request, uri, interpreter);
             this->content_type("html");
             this->body(cgi.get_output());
         } catch (StatusCode status_code) {

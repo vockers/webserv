@@ -14,7 +14,7 @@ namespace webserv::http
 {
 using utils::ErrorLogger;
 
-Cgi::Cgi(const Request& request, const std::string& uri, const std::string& interpreter)
+CGI::CGI(const Request& request, const std::string& uri, const std::string& interpreter)
     : _request(request)
 {
     try {
@@ -64,7 +64,7 @@ Cgi::Cgi(const Request& request, const std::string& uri, const std::string& inte
     }
 }
 
-void Cgi::try_file(const std::string& uri) const
+void CGI::try_file(const std::string& uri) const
 {
     struct stat sb;
     if (stat(uri.c_str(), &sb) == -1) {
@@ -76,7 +76,7 @@ void Cgi::try_file(const std::string& uri) const
     }
 }
 
-char** Cgi::create_envp() const
+char** CGI::create_envp() const
 {
     std::unordered_map<std::string, std::string> env_map;
 
@@ -97,7 +97,7 @@ char** Cgi::create_envp() const
             env_key = "CONTENT_LENGTH";
         } else {
             // For other headers, dynamically apply the CGI transformation
-            env_key = "HTTP_" + key;  // Prefix with HTTP_
+            env_key = "HTTP_" + key;  // Prefix with HTTP_ (TODO: check if this is correct)
             std::transform(env_key.begin(),
                            env_key.end(),
                            env_key.begin(),
@@ -111,7 +111,7 @@ char** Cgi::create_envp() const
     return convert_map_to_envp(env_map);
 }
 
-char** Cgi::convert_map_to_envp(const std::unordered_map<std::string, std::string>& env_map) const
+char** CGI::convert_map_to_envp(const std::unordered_map<std::string, std::string>& env_map) const
 {
     char** envp = new char*[env_map.size() + 1];
 
@@ -126,7 +126,7 @@ char** Cgi::convert_map_to_envp(const std::unordered_map<std::string, std::strin
     return envp;
 }
 
-void Cgi::free_envp(char** envp) const
+void CGI::free_envp(char** envp) const
 {
     for (size_t i = 0; envp[i] != nullptr; ++i) {
         delete[] envp[i];
@@ -134,11 +134,11 @@ void Cgi::free_envp(char** envp) const
     delete[] envp;
 }
 
-bool Cgi::is_cgi_request(const std::string& uri, std::string& interpreter)
+bool CGI::is_cgi_request(const std::string& uri, std::string& interpreter)
 {
     std::unordered_map<std::string, std::string> cgi_interpreters = {
-        // {".php", "/usr/bin/php-cgi"},
         {".py", "/bin/python3"},
+        // {".php", "/usr/bin/php-cgi"},
         // {".pl", "/usr/bin/perl"},
         // {".rb", "/usr/bin/ruby"}
     };
@@ -154,7 +154,7 @@ bool Cgi::is_cgi_request(const std::string& uri, std::string& interpreter)
     return false;
 }
 
-std::string Cgi::get_output() const
+std::string CGI::get_output() const
 {
     return _output;
 }
