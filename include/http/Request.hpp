@@ -21,6 +21,7 @@ public:
 
     Method             get_method() const;
     const std::string& get_uri() const;
+    const std::string& host() const;
     const Headers&     get_headers() const;
 
 private:

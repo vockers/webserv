@@ -49,6 +49,26 @@ public:
         Parameters allowed_params = {};
     };
 
+    class iterator
+    {
+    public:
+        iterator(const Config*, size_t index = 0);
+
+        iterator& next(Type type);
+        iterator& operator++();
+        iterator& operator++(int);
+
+        const Config& operator*();
+        const Config* operator->();
+
+        bool operator==(const iterator& other) const;
+        bool operator!=(const iterator& other) const;
+
+    private:
+        const Config* _config;
+        size_t        _index;
+    };
+
     Config(const std::string& file_path);
     Config(const std::string& name, Type type, Config* parent = nullptr);
 
@@ -103,6 +123,10 @@ public:
 
         return std::get<T>(directive->get_parameters()[col]);
     }
+
+    iterator begin() const;
+    iterator begin(Type type) const;
+    iterator end() const;
 
     const Config& location(const std::string& uri) const;
 

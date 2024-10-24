@@ -46,6 +46,11 @@ const std::string& Request::get_uri() const
     return _uri;
 }
 
+const std::string& Request::host() const
+{
+    return _headers.at("Host");
+}
+
 void Request::parse_line(const std::string& line)
 {
     std::stringstream line_stream(line);

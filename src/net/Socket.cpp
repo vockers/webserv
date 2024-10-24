@@ -70,10 +70,7 @@ Promise<ssize_t> Socket::read(std::vector<char>& buffer)
             buffer.resize(BUFFER_SIZE);
             ssize_t bytes_read = ::read(_fd, buffer.data(), BUFFER_SIZE);
             if (bytes_read == -1) {
-                if (errno == EAGAIN || errno == EWOULDBLOCK) {
-                    return std::nullopt;
-                }
-                throw std::runtime_error("Failed to read from socket");
+                return std::nullopt;
             }
             return bytes_read;
         },
@@ -87,10 +84,7 @@ Promise<ssize_t> Socket::write(const std::vector<char>& buffer)
         [this, &buffer]() -> std::optional<ssize_t> {
             ssize_t bytes_written = ::write(_fd, buffer.data(), buffer.size());
             if (bytes_written == -1) {
-                if (errno == EAGAIN || errno == EWOULDBLOCK) {
-                    return std::nullopt;
-                }
-                throw std::runtime_error("Failed to write to socket");
+                return std::nullopt;
             }
             return bytes_written;
         },

@@ -19,7 +19,7 @@ int main(int argc, char** argv)
 
         elog.log(ErrorLogger::INFO, "Starting webserv...");
 
-        Server server(config[Config::HTTP][Config::SERVER], elog);
+        Server server(config[Config::HTTP], elog);
 
         server.run();
     } catch (const std::exception& e) {

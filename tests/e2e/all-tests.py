@@ -2,6 +2,7 @@ import requests
 import requests_raw
 
 BASE_URL = "http://localhost:8080"
+BASE_URL_2 = "http://localhost:8081"
 
 def test_index():
 	expected_body = '''\
@@ -78,3 +79,32 @@ def test_missing_host():
 
     assert response.status_code == 400
     assert response.headers['Content-Type'] == 'text/html'
+
+def test_server_name():
+    req_1 = b"GET /name.html HTTP/1.1\r\nHost: localhost1:8080\r\n\r\n"
+
+    response_1 = requests_raw.raw(url=BASE_URL, data=req_1)
+
+    assert response_1.status_code == 200
+    assert response_1.text == "name in /1\n"
+
+    req_2 = b"GET /name.html HTTP/1.1\r\nHost: localhost2:8080\r\n\r\n"
+
+    response_2 = requests_raw.raw(url=BASE_URL, data=req_2)
+
+    assert response_2.status_code == 200
+    assert response_2.text == "name in /2\n"
+
+def test_default_server():
+    req = b"GET /name.html HTTP/1.1\r\nHost: foo\r\n\r\n"
+
+    response = requests_raw.raw(url=BASE_URL, data=req)
+
+    assert response.status_code == 200
+    assert response.text == "name in /\n"
+
+def test_second_server():
+    response = requests.get(f'{BASE_URL_2}/name.html')
+
+    assert response.status_code == 200
+    assert response.text == "name in /\n"
