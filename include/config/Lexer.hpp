@@ -58,5 +58,7 @@ private:
     void skip_whitespaces();
     /// Is the character a delimiter (whitespace, '{', '}', ';')
     bool is_delimiter(char c);
+    /// Skips comments (when a '#' is found, it skips until the end of the line)
+    void skip_comment();
 };
 }  // namespace webserv::config

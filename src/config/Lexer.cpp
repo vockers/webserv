@@ -35,7 +35,15 @@ Lexer::Lexer(const std::string& input) : _input(input), _current(_input.begin())
 
 Token Lexer::next_token()
 {
-    skip_whitespaces();
+    while (_current != _input.end()) {
+        if (std::isspace(*_current)) {
+            skip_whitespaces();
+        } else if (*_current == '#') {
+            skip_comment();
+        } else {
+            break;
+        }
+    }
 
     if (_current == _input.end()) {
         return {Token::Type::NONE, ""};
@@ -82,8 +90,15 @@ void Lexer::skip_whitespaces()
     }
 }
 
+void Lexer::skip_comment()
+{
+    while (_current != _input.end() && *_current != '\n') {
+        ++_current;
+    }
+}
+
 bool Lexer::is_delimiter(char c)
 {
-    return std::isspace(c) || c == '{' || c == '}' || c == ';';
+    return std::isspace(c) || c == '{' || c == '}' || c == ';' || c == '#';
 }
 }  // namespace webserv::config

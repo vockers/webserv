@@ -8,7 +8,7 @@ query_string = os.getenv('QUERY_STRING', '')
 
 # Parse the query string to get the 'text' parameter
 params = parse_qs(query_string)
-text = params.get('text', ['Webserve CGI script'])[0]  # Default to 'Fireworks Simulation' if 'text' is not provided
+text = params.get('text', ['Webserv CGI script'])[0]  # Default to 'Fireworks Simulation' if 'text' is not provided
 
 # HTML and JavaScript for fireworks simulation with animated text converging from random positions and styles
 print(f"""

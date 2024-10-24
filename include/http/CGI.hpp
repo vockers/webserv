@@ -13,7 +13,7 @@ class CGI
 {
 public:
     /// @brief Creates a new process to execute the CGI script
-	///
+    ///
     /// @param request the request object
     /// @param uri path of the request
     /// @param interpreter path to the interpreter
@@ -23,7 +23,7 @@ public:
 
     /// @brief Checks if the request is a CGI request and sets the interpreter
     ///
-	/// @param uri path of the request
+    /// @param uri path of the request
     /// @param interpreter path to the interpreter
     /// @return true if the request is a CGI request, false otherwise
     static bool is_cgi_request(const std::string& uri, std::string& interpreter);
