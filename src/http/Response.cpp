@@ -6,6 +6,8 @@
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
+#include <sys/stat.h>
+#include <dirent.h>
 
 #include "http/CGI.hpp"
 #include "http/Request.hpp"
@@ -44,11 +46,33 @@ Response::Response(const Request& request, const Config& config, ErrorLogger& el
     this->code(StatusCode::OK);
     const Config& location = config.location(request.get_uri());
     std::string   uri      = location.root() + request.get_uri();
-    if (uri.ends_with("/")) {
-        uri += location.index();
-        // TODO: Check autoindex if index file not found
+	if (uri.ends_with("/")) {
+		try {
+			file_exist(uri);
+			try {
+				file_readable(uri + location.index());
+				this->file(uri + location.index());
+				return;
+			} catch (StatusCode status_code) {
+				throw status_code;
+			}
+		} catch (StatusCode status_code) {
+			if (location.autoindex()) {
+				std::string autoindex_html;
+				try {
+					autoindex_html = generate_autoindex(uri);
+				} catch (StatusCode status_code) {
+					throw status_code;
+				}
+				this->content_type("html");
+				this->body(autoindex_html);
+				return;
+			} else {
+				throw status_code;
+			}
+		}
     }
-
+	
     std::string interpreter;
     if (CGI::is_cgi_request(uri, interpreter)) {
         try {
@@ -173,4 +197,57 @@ const std::string& Response::code_to_string(StatusCode code)
 
     return STATUS_CODES.at(code);
 }
-}  // namespace webserv::http
+
+void Response::file_exist(const std::string& path)
+{
+	if (access(path.c_str(), F_OK) == -1) {
+		throw StatusCode::NOT_FOUND;
+	}
+}
+
+void Response::file_readable(const std::string& path)
+{
+	if (access(path.c_str(), R_OK) == -1) {
+		throw StatusCode::FORBIDDEN;
+	}
+}
+
+std::string Response::generate_autoindex(const std::string& path) {
+    std::string html = "<html><head><title>Index of " + path + "</title></head><body>";
+    html += "<h1>Index of " + path + "</h1>";
+    html += "<ul>";
+
+    DIR* dir = opendir(path.c_str());
+    if (!dir) {
+        html += "<p>Error: Unable to open directory.</p>";
+        html += "</body></html>";
+        return html;
+    }
+
+    struct dirent* entry;
+    while ((entry = readdir(dir)) != nullptr) {
+        std::string name = entry->d_name;
+
+        if (name == "." || name == "..") continue;
+
+        std::string full_path = path + "/" + name;
+
+        struct stat file_stat;
+        if (stat(full_path.c_str(), &file_stat) == 0) {
+            html += "<li><a href=\"" + name;
+            if (S_ISDIR(file_stat.st_mode)) {
+                html += "/";
+            }
+            html += "\">" + name + "</a></li>";
+        }
+    }
+    closedir(dir);
+
+    html += "</ul>";
+    html += "<hr/><p style='text-align: center;'>webserv</p>";
+    html += "</body></html>";
+
+    return html;
+}
+
+}// namespace webserv::http

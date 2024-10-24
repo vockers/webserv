@@ -40,6 +40,10 @@ public:
     Response& content_type(const std::string& extension);
 
     ssize_t get_content_length() const;
+	
+	static void file_exist(const std::string& path);
+	static void file_readable(const std::string& path);
+	std::string generate_autoindex(const std::string& path);
 
     static const std::unordered_map<std::string, std::string> CONTENT_TYPES;
 
