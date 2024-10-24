@@ -68,6 +68,52 @@ const Config::Parameters Config::DEFAULT_PARAMS[] = {
 };
 // clang-format on
 
+Config::iterator::iterator(const Config* config, size_t index) : _config(config), _index(index) {}
+
+Config::iterator& Config::iterator::next(Type type)
+{
+    while (*this != _config->end()) {
+        ++_index;
+        if (_index == _config->_children.size() || _config->_children[_index]->get_type() == type) {
+            break;
+        }
+    }
+
+    return *this;
+}
+
+Config::iterator& Config::iterator::operator++()
+{
+    ++_index;
+    return *this;
+}
+
+Config::iterator& Config::iterator::operator++(int)
+{
+    ++_index;
+    return *this;
+}
+
+const Config& Config::iterator::operator*()
+{
+    return *_config->_children[_index];
+}
+
+const Config* Config::iterator::operator->()
+{
+    return _config->_children[_index].get();
+}
+
+bool Config::iterator::operator==(const iterator& other) const
+{
+    return _config == other._config && _index == other._index;
+}
+
+bool Config::iterator::operator!=(const iterator& other) const
+{
+    return !(*this == other);
+}
+
 Config::Config(const std::string& file_path) : _name(""), _type(MAIN), _parent(nullptr)
 {
     std::ifstream file(file_path);
@@ -135,16 +181,34 @@ Config::ConfigList Config::find(Type type) const
     return list;
 }
 
+Config::iterator Config::begin() const
+{
+    return Config::iterator(this, 0);
+}
+
+Config::iterator Config::begin(Type type) const
+{
+    for (size_t i = 0; i < _children.size(); ++i) {
+        if (_children[i]->get_type() == type) {
+            return Config::iterator(this, i);
+        }
+    }
+
+    return Config::iterator(this, _children.size());
+}
+
+Config::iterator Config::end() const
+{
+    return Config::iterator(this, _children.size());
+}
+
 const Config& Config::location(const std::string& uri) const
 {
-    for (const auto& child : _children) {
-        if (child->get_type() == LOCATION) {
-            for (const auto& param : child->get_parameters()) {
-                std::string param_name = std::get<std::string>(param);
-                if (param_name == uri ||
-                    (param_name.ends_with("/") && uri.starts_with(param_name))) {
-                    return *child.get();
-                }
+    for (auto it = this->begin(Type::LOCATION); it != this->end(); it = it.next(Type::LOCATION)) {
+        for (const auto& param : it->get_parameters()) {
+            std::string param_name = std::get<std::string>(param);
+            if (param_name == uri || (param_name.ends_with('/') && uri.starts_with(param_name))) {
+                return *it;
             }
         }
     }

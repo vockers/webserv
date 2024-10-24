@@ -23,6 +23,7 @@ public:
     const std::string& get_uri() const;
     const std::string& get_query() const;
     const std::string& get_body() const;
+    const std::string& host() const;
     const Headers&     get_headers() const;
 
 private:

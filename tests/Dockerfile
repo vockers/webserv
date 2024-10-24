@@ -13,7 +13,7 @@ WORKDIR /app
 COPY ../. .
 
 # Compile the source code
-RUN g++ -std=c++23 -I./include -o test \
+RUN g++ -std=c++23 -g -fsanitize=address -I./include -o test \
     src/config/Config.cpp \
     src/config/Lexer.cpp \
     src/config/Parser.cpp \

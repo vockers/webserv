@@ -16,12 +16,12 @@ using http::Request;
 using StatusCode = http::Response::StatusCode;
 using utils::ErrorLogger;
 
-class Server;
+class VirtualServer;
 
 class Client : public Socket
 {
 public:
-    Client(Socket&& socket, Server& server, ErrorLogger& elog);
+    Client(Socket&& socket, VirtualServer& server, ErrorLogger& elog);
     ~Client();
 
     using Socket::get_fd;
@@ -36,8 +36,8 @@ private:
     /// @return The request as a promise
     Promise<std::expected<Request, StatusCode>> read_request();
 
-    Server&      _server;
-    ErrorLogger& _elog;
+    VirtualServer& _server;
+    ErrorLogger&   _elog;
 
     std::vector<char> _buffer;
     std::string       _request;

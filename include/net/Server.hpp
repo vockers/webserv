@@ -1,12 +1,10 @@
 #pragma once
 
+#include <map>
 #include <memory>
-#include <string>
-#include <vector>
 
 #include "config/Config.hpp"
-#include "net/Client.hpp"
-#include "net/Listen.hpp"
+#include "net/VirtualServer.hpp"
 #include "utils/Logger.hpp"
 
 namespace webserv::net
@@ -18,21 +16,20 @@ using utils::ErrorLogger;
 class Server
 {
 public:
-    using Clients = std::vector<std::unique_ptr<Client>>;
+    using VirtualServers = std::map<int, std::unique_ptr<VirtualServer>>;
 
     Server(const Config& config, ErrorLogger& elog);
 
     /// Runs the event loop.
     void run();
 
+    /// @brief Returns the http directive configuration.
     const Config& get_config() const;
 
 private:
     const Config& _config;
     ErrorLogger&  _elog;
 
-    std::string _name;
-    Listen      _listen;
-    Clients     _clients;
+    VirtualServers _virtual_servers;
 };
 }  // namespace webserv::net

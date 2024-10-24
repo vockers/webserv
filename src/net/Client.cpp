@@ -5,12 +5,13 @@
 #include "http/CGI.hpp"
 #include "http/Response.hpp"
 #include "net/Server.hpp"
+#include "net/VirtualServer.hpp"
 
 namespace webserv::net
 {
 using http::Response;
 
-Client::Client(Socket&& socket, Server& server, ErrorLogger& elog)
+Client::Client(Socket&& socket, VirtualServer& server, ErrorLogger& elog)
     : Socket(std::move(socket)), _server(server), _elog(elog)
 {
 }
@@ -32,9 +33,11 @@ void Client::handle_connection()
             if (!result.has_value()) {
                 throw result.error();
             }
-            _response = Response(result.value(), _server.get_config(), _elog).str();
+            auto&       request   = result.value();
+            std::string host_name = request.host().substr(0, request.host().find(':'));
+            _response             = Response(request, _server.get_config(host_name), _elog).str();
         } catch (StatusCode status_code) {
-            _response = Response(status_code, _server.get_config(), _elog).str();
+            _response = Response(status_code, _server.get_config(""), _elog).str();
         }
         this->write(std::vector<char>(_response.begin(), _response.end()))
             .then([this](ssize_t bytes_written) {

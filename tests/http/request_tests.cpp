@@ -44,6 +44,13 @@ TEST(RequestTests, InvalidVersionTest)
 
 TEST(RequestTests, BadRequestTest)
 {
+    // Missing CRLFCRLF
     EXPECT_THROW_VALUE(Request("GET /index.html HTTP/1.1"), StatusCode, StatusCode::BAD_REQUEST);
+    // Missing CRLF
     EXPECT_THROW_VALUE(Request("GET /index.html HTTP/1.1\r\n"), StatusCode, StatusCode::BAD_REQUEST);
+    // Missing Host header
+    EXPECT_THROW_VALUE(Request("GET /index.html HTTP/1.1\r\n"
+                               "User-Agent: curl/7.68.0\r\n"
+                               "Accept: */*\r\n"
+                               "\r\n"), StatusCode, StatusCode::BAD_REQUEST);
 }

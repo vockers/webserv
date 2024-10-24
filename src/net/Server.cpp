@@ -8,41 +8,29 @@
 #include <memory>
 
 #include "async/Poller.hpp"
-#include "utils/Logger.hpp"
 
 namespace webserv::net
 {
 using async::Poller;
-using webserv::utils::ErrorLogger;
 
-Server::Server(const Config& config, ErrorLogger& elog)
-    : _name(config.server_name()),
-      _listen(Address("0.0.0.0", config.listen())),
-      _config(config),
-      _elog(elog)
+Server::Server(const Config& config, ErrorLogger& elog) : _config(config), _elog(elog)
 {
-    _elog.log(ErrorLogger::INFO, "Listening on " + _listen.get_address().to_string());
+    for (auto it = config.begin(Config::Type::SERVER); it != config.end();
+         it      = it.next(Config::Type::SERVER)) {
+        if (_virtual_servers.find(it->listen()) == _virtual_servers.end()) {
+            _virtual_servers[it->listen()] =
+                std::make_unique<VirtualServer>(it->listen(), it->server_name(), elog);
+        }
+        _virtual_servers[it->listen()]->add_config(*it);
+    }
 }
 
 void Server::run()
 {
     while (true) {
-        _listen.accept().then([this](Socket socket) {
-            _clients.emplace_back(std::make_unique<Client>(std::move(socket), *this, _elog));
-
-            Client& client = *(_clients.back());
-            _elog.log(ErrorLogger::INFO,
-                      "Accepted connection from " + client.get_address().to_string());
-            client.handle_connection();
-        });
-
-        // Remove disconnected clients
-        _clients.erase(std::remove_if(_clients.begin(),
-                                      _clients.end(),
-                                      [](const std::unique_ptr<Client>& client) {
-                                          return client->get_fd() == -1;
-                                      }),
-                       _clients.end());
+        for (const auto& server : _virtual_servers) {
+            server.second->listen();
+        }
 
         Poller::instance().poll();
     }
