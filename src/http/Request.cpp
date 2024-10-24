@@ -46,6 +46,11 @@ const std::string& Request::get_uri() const
     return _uri;
 }
 
+const std::string& Request::host() const
+{
+    return _headers.at("Host");
+}
+
 void Request::parse_line(const std::string& line)
 {
     std::stringstream line_stream(line);
@@ -87,6 +92,11 @@ void Request::parse_headers(const std::string& headers)
         std::string value = header.substr(colon_pos + 2, header.size() - colon_pos - 3);
 
         _headers[key] = value;
+    }
+
+    // Host header is mandatory
+    if (_headers.find("Host") == _headers.end()) {
+        throw StatusCode::BAD_REQUEST;
     }
 }
 }  // namespace webserv::http

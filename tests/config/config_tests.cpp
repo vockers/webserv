@@ -72,3 +72,61 @@ TEST(ConfigTests, ErrorHandling)
     EXPECT_THROW(server.value<int>(Type::LISTEN, 1), std::runtime_error);
     EXPECT_THROW(server.value<std::string>(Type::ROOT, 1), std::runtime_error);
 }
+
+TEST(ConfigTests, Iterator)
+{
+    Config config("tests/conf/iterator.conf");
+
+    auto it = config.begin();
+    EXPECT_EQ(it->get_type(), Type::LOG_LEVEL);
+    ++it;
+    EXPECT_EQ(it->get_type(), Type::HTTP);
+
+    auto http_it = it->begin();
+    EXPECT_EQ(http_it->get_type(), Type::SERVER);
+
+    auto server_it = http_it->begin();
+    EXPECT_EQ(server_it->get_type(), Type::SERVER_NAME);
+    ++server_it;
+    EXPECT_EQ(server_it->get_type(), Type::LISTEN);
+
+    ++server_it;
+    EXPECT_EQ(server_it->get_type(), Type::LOCATION);
+
+    auto location_it = server_it->begin();
+    EXPECT_EQ(location_it->get_type(), Type::ROOT);
+    ++location_it;
+    EXPECT_EQ(location_it->get_type(), Type::INDEX);
+
+    ++server_it;
+    EXPECT_EQ(server_it->get_type(), Type::LOCATION);
+
+    server_it = server_it.next(Type::LOCATION);
+    EXPECT_EQ(server_it->get_type(), Type::LOCATION);
+    server_it = server_it.next(Type::LOCATION);
+    EXPECT_EQ(server_it->get_type(), Type::LOCATION);
+    server_it = server_it.next(Type::LOCATION);
+    EXPECT_EQ(server_it, http_it->end());
+}
+
+TEST(ConfigTests, Location)
+{
+    Config config("tests/conf/location.conf");
+
+    const Config& main = config;
+
+    auto& http = *main.get_children()[0];
+    auto& server = *http.get_children()[0];
+
+    auto& location = server.location("/1");
+    EXPECT_EQ(location.get_type(), Type::LOCATION);
+    EXPECT_EQ(location.root(), "/www");
+    EXPECT_EQ(location.index(), "index.html");
+    EXPECT_EQ(location.autoindex(), true);
+
+    auto& location2 = server.location("/2");
+    EXPECT_EQ(location2.get_type(), Type::LOCATION);
+    EXPECT_EQ(location2.root(), "/www/2");
+    EXPECT_EQ(location2.index(), "index.php");
+    EXPECT_EQ(location2.autoindex(), false);
+}
