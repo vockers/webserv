@@ -70,3 +70,23 @@ def test_bad_request():
 
     assert response.status_code == 400
     assert response.headers['Content-Type'] == 'text/html'
+    
+def test_cgi_env():
+	expected_body = '''\
+HTTP_HOST: localhost:8080
+HTTP_USER_AGENT: python-requests/2.32.3
+HTTP_ACCEPT_ENCODING: gzip, deflate
+SERVER_PROTOCOL: HTTP/1.1
+QUERY_STRING: 
+HTTP_ACCEPT: */*
+REQUEST_URI: /cgi/env.py
+HTTP_CONNECTION: keep-alive
+REQUEST_METHOD: GET
+LC_CTYPE: C.UTF-8
+'''
+
+	response = requests.get(f'{BASE_URL}/cgi/env.py')
+
+	assert response.status_code == 200
+	assert response.text == expected_body
+	

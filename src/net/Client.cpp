@@ -1,10 +1,10 @@
 #include "net/Client.hpp"
 
+#include <iostream>
+
+#include "http/CGI.hpp"
 #include "http/Response.hpp"
 #include "net/Server.hpp"
-#include "http/Cgi.hpp"
-
-#include <iostream>
 
 namespace webserv::net
 {
@@ -25,26 +25,14 @@ void Client::handle_connection()
     _request.clear();
     _response.clear();
 
-	_elog.log(ErrorLogger::DEBUG, "Handling connection from " + get_address().to_string());
+    _elog.log(ErrorLogger::DEBUG, "Handling connection from " + get_address().to_string());
     this->read_request().then([this](std::expected<Request, StatusCode> result) {
-        _elog.log("Received request from " + get_address().to_string());
-
         // Create a response and send it back to the client
         try {
             if (!result.has_value()) {
                 throw result.error();
             }
-			
-			// std::string interpreter;
-			// if (webserv::http::Cgi::is_cgi_request(result->get_uri(), interpreter)) {
-			// 	webserv::http::Cgi cgi(*result, interpreter, _elog);
-
-			// 	_elog.log(ErrorLogger::DEBUG, "CGI output: " + cgi.get_output());
-			// 	_response = Response(cgi.get_output(), _server.get_config(), _elog).str();
-			// }
-			// else {
             _response = Response(result.value(), _server.get_config(), _elog).str();
-			// }
         } catch (StatusCode status_code) {
             _response = Response(status_code, _server.get_config(), _elog).str();
         }
