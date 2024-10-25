@@ -53,7 +53,7 @@ const std::string& Request::get_uri() const
 
 const std::string& Request::host() const
 {
-    return _headers.at("Host");
+    return _headers.at("host");
 }
 
 const std::string& Request::body() const
@@ -110,17 +110,19 @@ void Request::parse_headers(const std::string& headers)
 
         std::string key   = header.substr(0, colon_pos);
         std::string value = header.substr(colon_pos + 2, header.size() - colon_pos - 3);
+        // field-name (key) is case-insensitive
+        std::transform(key.begin(), key.end(), key.begin(), ::tolower);
 
         _headers[key] = value;
     }
 
     // Host header is mandatory
-    if (_headers.find("Host") == _headers.end()) {
+    if (_headers.find("host") == _headers.end()) {
         throw StatusCode::BAD_REQUEST;
     }
 
     try {
-        _content_length = std::stoul(_headers.at("Content-Length"));
+        _content_length = std::stoul(_headers.at("content-length"));
     } catch (const std::exception& e) {
         _content_length = 0;
     }

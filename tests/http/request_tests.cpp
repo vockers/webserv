@@ -27,9 +27,9 @@ TEST(RequestTests, RequestTest)
 
     const auto& headers = request.get_headers();
     EXPECT_EQ(headers.size(), 3);
-    EXPECT_EQ(headers.at("Host"), "localhost:8080");
-    EXPECT_EQ(headers.at("User-Agent"), "curl/7.68.0");
-    EXPECT_EQ(headers.at("Accept"), "*/*");
+    EXPECT_EQ(headers.at("host"), "localhost:8080");
+    EXPECT_EQ(headers.at("user-agent"), "curl/7.68.0");
+    EXPECT_EQ(headers.at("accept"), "*/*");
 }
 
 TEST(RequestTests, InvalidMethodTest)
