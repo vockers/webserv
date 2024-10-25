@@ -1,5 +1,7 @@
 #include "net/Client.hpp"
 
+#include <iostream>
+
 #include "http/Response.hpp"
 #include "net/Server.hpp"
 #include "net/VirtualServer.hpp"
@@ -20,24 +22,25 @@ Client::~Client()
 
 void Client::handle_connection()
 {
-    _request.clear();
-    _response.clear();
+    _request.reset();
+    _request_str.clear();
+    _response_str.clear();
 
-    this->read_request().then([this](std::expected<Request, StatusCode> result) {
+    this->read_request().then([this](StatusCode status_code) {
         _elog.log("Received request from " + get_address().to_string());
 
         // Create a response and send it back to the client
+        std::string host_name = "";
         try {
-            if (!result.has_value()) {
-                throw result.error();
+            if (status_code != StatusCode::OK) {
+                throw status_code;
             }
-            auto&       request   = result.value();
-            std::string host_name = request.host().substr(0, request.host().find(':'));
-            _response             = Response(request, _server.get_config(host_name), _elog).str();
+            host_name     = _request->host().substr(0, _request->host().find(':'));
+            _response_str = Response(*_request, _server.get_config(host_name), _elog).str();
         } catch (StatusCode status_code) {
-            _response = Response(status_code, _server.get_config(""), _elog).str();
+            _response_str = Response(status_code, _server.get_config(host_name), _elog).str();
         }
-        this->write(std::vector<char>(_response.begin(), _response.end()))
+        this->write(std::vector<char>(_response_str.begin(), _response_str.end()))
             .then([this](ssize_t bytes_written) {
                 _elog.log("Sent response to " + get_address().to_string() + ": " +
                           std::to_string(bytes_written) + " bytes");
@@ -48,33 +51,52 @@ void Client::handle_connection()
     });
 }
 
-Promise<std::expected<Request, StatusCode>> Client::read_request()
+Promise<StatusCode> Client::read_request()
 {
-    return Promise<std::expected<Request, StatusCode>>(
-        [this]() -> std::optional<std::expected<Request, StatusCode>> {
-            this->read(_buffer).then([this](ssize_t bytes_read) {
-                if (bytes_read == 0) {
-                    this->close();
-                    return;
-                }
+    return Promise<StatusCode>([this]() -> std::optional<StatusCode> {
+        // Read data from the client's socket and append it to the request
+        this->read(_buffer).then([this](ssize_t bytes_read) {
+            if (bytes_read == 0) {
+                this->close();
+                return;
+            }
 
-                _request += std::string(_buffer.begin(), _buffer.begin() + bytes_read);
-                _buffer.clear();
+            if (_request) {
+                _request->append_body(std::string(_buffer.begin(), _buffer.begin() + bytes_read));
+            } else {
+                _request_str += std::string(_buffer.begin(), _buffer.begin() + bytes_read);
+            }
+            _buffer.clear();
 
-                _elog.log("Received data from " + get_address().to_string() + ": " +
-                          std::to_string(bytes_read) + " bytes");
-            });
+            _elog.log("Received data from " + get_address().to_string() + ": " +
+                      std::to_string(bytes_read) + " bytes");
+        });
 
-            // Check if the request is complete, i.e. contains two CRLF sequences
-            if (_request.find("\r\n\r\n") != std::string::npos) {
-                try {
-                    return Request(_request);
-                } catch (StatusCode status_code) {
-                    return std::unexpected(status_code);
-                }
+        // Check if the request body is complete
+        if (_request) {
+            if (_request->content_length() == _request->body().size()) {
+                return StatusCode::OK;
+            } else if (_request->content_length() < _request->body().size()) {
+                return StatusCode::BAD_REQUEST;
             }
 
             return std::nullopt;
-        });
+        }
+
+        // Check if the request-line and headers are complete
+        if (_request_str.find("\r\n\r\n") != std::string::npos) {
+            try {
+                _request.reset(new Request(_request_str));
+                if (_request->content_length() > 0) {
+                    return std::nullopt;
+                }
+                return StatusCode::OK;
+            } catch (StatusCode status_code) {
+                return status_code;
+            }
+        }
+
+        return std::nullopt;
+    });
 }
 }  // namespace webserv::net

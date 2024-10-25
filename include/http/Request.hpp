@@ -21,8 +21,12 @@ public:
 
     Method             get_method() const;
     const std::string& get_uri() const;
-    const std::string& host() const;
     const Headers&     get_headers() const;
+    const std::string& host() const;
+    const std::string& body() const;
+    size_t             content_length() const;
+
+    void append_body(const std::string& body);
 
 private:
     using MethodMap = std::unordered_map<std::string, Method>;
@@ -30,6 +34,8 @@ private:
     Method      _method;
     std::string _uri;
     Headers     _headers;
+    std::string _body;
+    size_t      _content_length;
 
     void parse_line(const std::string& line);
     void parse_headers(const std::string& headers);

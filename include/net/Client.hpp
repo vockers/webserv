@@ -1,7 +1,5 @@
 #pragma once
 
-#include <expected>
-
 #include "config/Config.hpp"
 #include "http/Request.hpp"
 #include "http/Response.hpp"
@@ -34,13 +32,15 @@ private:
     /// Asynchronously reads a request from the client
     ///
     /// @return The request as a promise
-    Promise<std::expected<Request, StatusCode>> read_request();
+    Promise<StatusCode> read_request();
 
     VirtualServer& _server;
     ErrorLogger&   _elog;
 
+    std::unique_ptr<Request> _request;
+
     std::vector<char> _buffer;
-    std::string       _request;
-    std::string       _response;
+    std::string       _request_str;
+    std::string       _response_str;
 };
 }  // namespace webserv::net
