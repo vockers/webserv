@@ -4,6 +4,7 @@
 #include <unistd.h>
 
 #include <fstream>
+#include <iostream>
 #include <stdexcept>
 
 #include "http/Request.hpp"
@@ -37,7 +38,7 @@ const std::unordered_map<std::string, std::string> Response::CONTENT_TYPES = {
 // clang-format on
 
 Response::Response(const Request& request, const Config& config, ErrorLogger& elog)
-    : _content_length(0), _elog(elog)
+    : _config(config), _content_length(0), _elog(elog)
 {
     this->code(StatusCode::OK);
     const Config& location = config.location(request.get_uri());
@@ -46,11 +47,21 @@ Response::Response(const Request& request, const Config& config, ErrorLogger& el
         uri += location.index();
         // TODO: Check autoindex if index file not found
     }
-    this->file(uri);
+
+    switch (request.get_method()) {
+    case Request::Method::GET:
+        this->file(uri);
+        break;
+    case Request::Method::POST:
+        this->upload(request.get_uri(), request.body());
+        break;
+    default:
+        throw StatusCode::NOT_IMPLEMENTED;
+    }
 }
 
 Response::Response(StatusCode code, const Config& config, ErrorLogger& elog)
-    : _content_length(0), _elog(elog)
+    : _config(config), _content_length(0), _elog(elog)
 {
     try {
         std::string error_page_path = config.error_page(static_cast<int>(code));
@@ -108,6 +119,7 @@ Response& Response::file(const std::string& path)
     std::fstream file(path);
     if (!file.is_open()) {
         throw StatusCode::NOT_FOUND;
+        // TODO: Throw Forbidden if no read permission
     }
     std::stringstream ss;
     ss << file.rdbuf();
@@ -122,6 +134,39 @@ Response& Response::file(const std::string& path)
 Response& Response::content_type(const std::string& extension)
 {
     this->header("Content-Type", get_content_type(extension));
+
+    return *this;
+}
+
+Response& Response::upload(const std::string& uri, const std::string& body)
+{
+    std::string boundary = body.substr(0, body.find("\r\n"));
+    size_t      pos      = body.find("filename=\"") + 10;
+    std::string filename = body.substr(pos, body.find("\"", pos) - pos);
+    std::string data     = body.substr(body.find("\r\n\r\n") + 4);
+    data                 = data.substr(0, data.find(boundary) - 2);
+
+    const Config& location = _config.location(uri);
+
+    // Check if their is an upload directory
+    std::string path = "";
+    try {
+        path = location.upload_dir() + filename;
+    } catch (...) {
+        throw StatusCode::INTERNAL_SERVER_ERROR;
+        // TODO: Throw Forbidden if no upload directory
+    }
+
+    std::ofstream file(path);
+    if (!file.is_open()) {
+        throw StatusCode::INTERNAL_SERVER_ERROR;
+        // TODO: Throw Forbidden if no write permission
+    }
+
+    file << data;
+
+    this->content_type("txt");
+    this->body("File uploaded");
 
     return *this;
 }

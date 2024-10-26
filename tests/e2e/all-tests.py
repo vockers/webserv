@@ -1,5 +1,6 @@
 import requests
 import requests_raw
+import os
 
 BASE_URL = "http://localhost:8080"
 BASE_URL_2 = "http://localhost:8081"
@@ -108,3 +109,21 @@ def test_second_server():
 
     assert response.status_code == 200
     assert response.text == "name in /\n"
+
+def test_upload():
+    files = {'file': ('test.txt', 'hello world\n')}
+    response = requests.post(f'{BASE_URL}/upload/', files=files)
+
+    assert response.status_code == 200
+    assert response.text == "File uploaded"
+
+    response = requests.get(f'{BASE_URL}/upload/test.txt')
+
+    assert response.status_code == 200
+    assert response.text == "hello world\n"
+
+    os.remove('tests/www/upload/test.txt') 
+
+    response = requests.get(f'{BASE_URL}/upload/test.txt')
+
+    assert response.status_code == 404

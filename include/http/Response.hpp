@@ -37,6 +37,7 @@ public:
     Response& body(const std::string& body);
     Response& file(const std::string& path);
     Response& content_type(const std::string& extension);
+    Response& upload(const std::string& uri, const std::string& body);
 
     ssize_t get_content_length() const;
 
@@ -55,6 +56,8 @@ public:
     static const std::string& code_to_string(StatusCode code);
 
 private:
+    const Config& _config;
+
     ssize_t _content_length;
 
     ErrorLogger& _elog;

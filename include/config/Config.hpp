@@ -35,6 +35,7 @@ public:
         CLIENT_MAX_BODY_SIZE,
         RETURN,
         ERROR_PAGE,
+        UPLOAD_DIR,
     };
 
     /// Used for validation
@@ -135,6 +136,7 @@ public:
     const std::string& index() const;
     const std::string& log_level() const;
     const std::string& error_page(int code) const;
+    const std::string& upload_dir() const;
 
     int  listen() const;
     bool autoindex() const;
