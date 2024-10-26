@@ -1,13 +1,13 @@
 #include "http/Response.hpp"
 
+#include <dirent.h>
 #include <fcntl.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
-#include <sys/stat.h>
-#include <dirent.h>
 
 #include "http/CGI.hpp"
 #include "http/Request.hpp"
@@ -46,33 +46,33 @@ Response::Response(const Request& request, const Config& config, ErrorLogger& el
     this->code(StatusCode::OK);
     const Config& location = config.location(request.get_uri());
     std::string   uri      = location.root() + request.get_uri();
-	if (uri.ends_with("/")) {
-		try {
-			file_exist(uri);
-			try {
-				file_readable(uri + location.index());
-				this->file(uri + location.index());
-				return;
-			} catch (StatusCode status_code) {
-				throw status_code;
-			}
-		} catch (StatusCode status_code) {
-			if (location.autoindex()) {
-				std::string autoindex_html;
-				try {
-					autoindex_html = generate_autoindex(uri);
-				} catch (StatusCode status_code) {
-					throw status_code;
-				}
-				this->content_type("html");
-				this->body(autoindex_html);
-				return;
-			} else {
-				throw status_code;
-			}
-		}
+    if (uri.ends_with("/")) {
+        try {
+            file_exist(uri);
+            try {
+                file_readable(uri + location.index());
+                this->file(uri + location.index());
+                return;
+            } catch (StatusCode status_code) {
+                throw status_code;
+            }
+        } catch (StatusCode status_code) {
+            if (location.autoindex()) {
+                std::string autoindex_html;
+                try {
+                    autoindex_html = generate_autoindex(uri);
+                } catch (StatusCode status_code) {
+                    throw status_code;
+                }
+                this->content_type("html");
+                this->body(autoindex_html);
+                return;
+            } else {
+                throw status_code;
+            }
+        }
     }
-	
+
     std::string interpreter;
     if (CGI::is_cgi_request(uri, interpreter)) {
         try {
@@ -200,35 +200,40 @@ const std::string& Response::code_to_string(StatusCode code)
 
 void Response::file_exist(const std::string& path)
 {
-	if (access(path.c_str(), F_OK) == -1) {
-		throw StatusCode::NOT_FOUND;
-	}
+    if (access(path.c_str(), F_OK) == -1) {
+        throw StatusCode::NOT_FOUND;
+    }
 }
 
 void Response::file_readable(const std::string& path)
 {
-	if (access(path.c_str(), R_OK) == -1) {
-		throw StatusCode::FORBIDDEN;
-	}
+    if (access(path.c_str(), R_OK) == -1) {
+        throw StatusCode::FORBIDDEN;
+    }
 }
 
-std::string Response::generate_autoindex(const std::string& path) {
-    std::string html = "<html><head><title>Index of " + path + "</title></head><body>";
-    html += "<h1>Index of " + path + "</h1>";
-    html += "<ul>";
-
+std::string Response::generate_autoindex(const std::string& path)
+{
     DIR* dir = opendir(path.c_str());
     if (!dir) {
-        html += "<p>Error: Unable to open directory.</p>";
-        html += "</body></html>";
-        return html;
+        throw StatusCode::FORBIDDEN;
     }
-
+    // clang-format off
+	std::string html =	"<!DOCTYPE html>\n"
+						"<html lang=\"en-US\"><head><meta charset=\"utf-8\" />\n"
+						"	<head>\n"
+						"		<title>Index of " + path + "</title>\n"
+						"	</head>\n"
+						"	<body>\n"
+  						"	<h1>Index of " + path + "</h1>\n"
+						"	<ul>\n";
+    // clang-format on
     struct dirent* entry;
     while ((entry = readdir(dir)) != nullptr) {
         std::string name = entry->d_name;
 
-        if (name == "." || name == "..") continue;
+        if (name == "." || name == "..")
+            continue;
 
         std::string full_path = path + "/" + name;
 
@@ -242,12 +247,13 @@ std::string Response::generate_autoindex(const std::string& path) {
         }
     }
     closedir(dir);
-
-    html += "</ul>";
-    html += "<hr/><p style='text-align: center;'>webserv</p>";
-    html += "</body></html>";
-
+    // clang-format off
+    html += "	</ul>\n"
+			"	<hr/><p style='text-align: center;'>webserv</p>"
+			"	</body>"
+			"</html>";
+    // clang-format on
     return html;
 }
 
-}// namespace webserv::http
+}  // namespace webserv::http

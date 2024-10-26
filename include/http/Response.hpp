@@ -40,9 +40,23 @@ public:
     Response& content_type(const std::string& extension);
 
     ssize_t get_content_length() const;
-	
-	static void file_exist(const std::string& path);
-	static void file_readable(const std::string& path);
+
+    /// @brief Checks if a file exists
+	///
+    /// @param path Path to the file
+	/// @throw StatusCode::NOT_FOUND if the file does not exist
+    static void file_exist(const std::string& path);
+
+	/// @brief Checks if a file is readable
+	///
+	/// @param path Path to the file
+	/// @throw StatusCode::FORBIDDEN if the file is not readable
+    static void file_readable(const std::string& path);
+    
+	/// @brief Generates an autoindex page for a directory
+	///
+	/// @param path Path to the directory
+	/// @return Autoindex page as a string
 	std::string generate_autoindex(const std::string& path);
 
     static const std::unordered_map<std::string, std::string> CONTENT_TYPES;
