@@ -28,6 +28,9 @@ TEST(LexerTests, SingleWordWithWhitespace)
     auto token = lexer.next_token();
     EXPECT_EQ(token.type, Lexer::Token::Type::STRING);
     EXPECT_EQ(token.get<std::string>(), "word");
+
+	token = lexer.next_token();
+    EXPECT_EQ(token.type, Lexer::Token::Type::NONE);
 }
 
 TEST(LexerTests, SingleWordWithWhitespaceAndSemicolon)
@@ -90,3 +93,55 @@ TEST(LexerTests, StringNumberBool)
     EXPECT_EQ(token.get<bool>(), false);
 }
 
+TEST(LexerTests, WordComment)
+{
+    Lexer lexer("word# comment");
+    auto token = lexer.next_token();
+    EXPECT_EQ(token.type, Lexer::Token::Type::STRING);
+    EXPECT_EQ(token.get<std::string>(), "word");
+
+    token = lexer.next_token();
+    EXPECT_EQ(token.type, Lexer::Token::Type::NONE);
+}
+
+TEST(LexerTests, WordSpaceComment)
+{
+    Lexer lexer("word # comment");
+    auto token = lexer.next_token();
+    EXPECT_EQ(token.type, Lexer::Token::Type::STRING);
+    EXPECT_EQ(token.get<std::string>(), "word");
+
+    token = lexer.next_token();
+    EXPECT_EQ(token.type, Lexer::Token::Type::NONE);
+}
+
+TEST(LexerTests, Comment)
+{
+    Lexer lexer("# comment");
+    auto token = lexer.next_token();
+    EXPECT_EQ(token.type, Lexer::Token::Type::NONE);
+}
+
+TEST(LexerTests, SpaceComment)
+{
+    Lexer lexer("     # comment");
+    auto token = lexer.next_token();
+    EXPECT_EQ(token.type, Lexer::Token::Type::NONE);
+}
+
+TEST(LexerTests, CommentWordSpaceBlockStartEnd)
+{
+    Lexer lexer("     # comment\nword { # comment\n};");
+	auto token = lexer.next_token();
+	EXPECT_EQ(token.type, Lexer::Token::Type::STRING);
+	EXPECT_EQ(token.get<std::string>(), "word");
+
+	token = lexer.next_token();
+	EXPECT_EQ(token.type, Lexer::Token::Type::BLOCK_START);
+
+	token = lexer.next_token();
+	EXPECT_EQ(token.type, Lexer::Token::Type::BLOCK_END);
+
+	token = lexer.next_token();
+	EXPECT_EQ(token.type, Lexer::Token::Type::END);
+}
