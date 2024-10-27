@@ -38,6 +38,12 @@ public:
     Response& body(const std::string& body);
     Response& file(const std::string& path);
     Response& content_type(const std::string& extension);
+    
+	/// @brief Generates an autoindex page for a directory
+	///
+	/// @param path Path to the directory
+    /// @param uri URI of the request
+	Response& autoindex(const std::string& path, const std::string& uri);
 
     ssize_t get_content_length() const;
 
@@ -52,12 +58,6 @@ public:
 	/// @param path Path to the file
 	/// @throw StatusCode::FORBIDDEN if the file is not readable
     static void file_readable(const std::string& path);
-    
-	/// @brief Generates an autoindex page for a directory
-	///
-	/// @param path Path to the directory
-	/// @return Autoindex page as a string
-	std::string generate_autoindex(const std::string& path);
 
     static const std::unordered_map<std::string, std::string> CONTENT_TYPES;
 

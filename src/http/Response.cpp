@@ -7,7 +7,6 @@
 
 #include <fstream>
 #include <iostream>
-#include <stdexcept>
 
 #include "http/CGI.hpp"
 #include "http/Request.hpp"
@@ -45,27 +44,14 @@ Response::Response(const Request& request, const Config& config, ErrorLogger& el
 {
     this->code(StatusCode::OK);
     const Config& location = config.location(request.get_uri());
-    std::string   uri      = location.root() + request.get_uri();
-    if (uri.ends_with("/")) {
+    std::string   path     = location.root() + request.get_uri();
+    if (path.ends_with("/")) {
         try {
-            file_exist(uri);
-            try {
-                file_readable(uri + location.index());
-                this->file(uri + location.index());
-                return;
-            } catch (StatusCode status_code) {
-                throw status_code;
-            }
+            this->file(path + location.index());
+            return;
         } catch (StatusCode status_code) {
             if (location.autoindex()) {
-                std::string autoindex_html;
-                try {
-                    autoindex_html = generate_autoindex(uri);
-                } catch (StatusCode status_code) {
-                    throw status_code;
-                }
-                this->content_type("html");
-                this->body(autoindex_html);
+                this->autoindex(path, request.get_uri());
                 return;
             } else {
                 throw status_code;
@@ -74,16 +60,16 @@ Response::Response(const Request& request, const Config& config, ErrorLogger& el
     }
 
     std::string interpreter;
-    if (CGI::is_cgi_request(uri, interpreter)) {
+    if (CGI::is_cgi_request(path, interpreter)) {
         try {
-            CGI cgi(request, uri, interpreter);
+            CGI cgi(request, path, interpreter);
             this->content_type("html");
             this->body(cgi.get_output());
         } catch (StatusCode status_code) {
             throw status_code;
         }
     } else {
-        this->file(uri);
+        this->file(path);
     }
 }
 
@@ -143,6 +129,9 @@ Response& Response::body(const std::string& body)
 
 Response& Response::file(const std::string& path)
 {
+    this->file_exist(path);
+    this->file_readable(path);
+
     std::fstream file(path);
     if (!file.is_open()) {
         throw StatusCode::NOT_FOUND;
@@ -212,22 +201,24 @@ void Response::file_readable(const std::string& path)
     }
 }
 
-std::string Response::generate_autoindex(const std::string& path)
+Response& Response::autoindex(const std::string& path, const std::string& uri)
 {
     DIR* dir = opendir(path.c_str());
     if (!dir) {
         throw StatusCode::FORBIDDEN;
     }
+
     // clang-format off
-	std::string html =	"<!DOCTYPE html>\n"
-						"<html lang=\"en-US\"><head><meta charset=\"utf-8\" />\n"
-						"	<head>\n"
-						"		<title>Index of " + path + "</title>\n"
-						"	</head>\n"
-						"	<body>\n"
-  						"	<h1>Index of " + path + "</h1>\n"
-						"	<ul>\n";
+	std::string html = "<!DOCTYPE html>\n"
+                       "<html lang=\"en-US\"><head><meta charset=\"utf-8\" />\n"
+                       "    <head>\n"
+                       "        <title>Index of " + uri + "</title>\n"
+                       "    </head>\n"
+                       "    <body>\n"
+                       "        <h1>Index of " + uri + "</h1>\n"
+                       "        <ul>\n";
     // clang-format on
+
     struct dirent* entry;
     while ((entry = readdir(dir)) != nullptr) {
         std::string name = entry->d_name;
@@ -239,21 +230,27 @@ std::string Response::generate_autoindex(const std::string& path)
 
         struct stat file_stat;
         if (stat(full_path.c_str(), &file_stat) == 0) {
-            html += "<li><a href=\"" + name;
+            html += "            <li><a href=\"" + name;
             if (S_ISDIR(file_stat.st_mode)) {
                 html += "/";
             }
-            html += "\">" + name + "</a></li>";
+            html += "\">" + name + "</a></li>\n";
         }
     }
+
     closedir(dir);
+
     // clang-format off
-    html += "	</ul>\n"
-			"	<hr/><p style='text-align: center;'>webserv</p>"
-			"	</body>"
-			"</html>";
+    html += "        </ul>\n"
+            "        <hr/><p style='text-align: center;'>webserv</p>\n"
+            "    </body>\n"
+            "</html>\n";
     // clang-format on
-    return html;
+
+    this->content_type("html");
+    this->body(html);
+
+    return *this;
 }
 
 }  // namespace webserv::http
