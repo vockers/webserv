@@ -32,11 +32,35 @@ public:
     Response(const Request& request, const Config& config, ErrorLogger& elog);
     Response(StatusCode code, const Config& config, ErrorLogger& elog);
 
+    /// @brief Sets the response status code
+    ///
+    /// @param code Status code
     Response& code(StatusCode code);
+
+    /// @brief Sets the response status code
+    ///
+    /// @param code Status code
     Response& code(const std::string& code);
+
+    /// @brief Sets a response header
+    ///
+    /// @param key Header key
+    /// @param value Header value
     Response& header(const std::string& key, const std::string& value);
+
+    /// @brief Sets the response body and Content-Length header
+    ///
+    /// @param body Response body, Content-Length will be set to body.size()
     Response& body(const std::string& body);
+
+    /// @brief Sends a file as the response body
+    ///
+    /// @param path Path to the file
     Response& file(const std::string& path);
+
+    /// @brief Sets the content type header based on the file extension
+    ///
+    /// @param extension File extension
     Response& content_type(const std::string& extension);
     
 	/// @brief Generates an autoindex page for a directory
@@ -45,6 +69,9 @@ public:
     /// @param uri URI of the request
 	Response& autoindex(const std::string& path, const std::string& uri);
 
+    /// @brief Returns the Content-Length header value
+    ///
+    /// @return Content-Length header value
     ssize_t get_content_length() const;
 
     /// @brief Checks if a file exists
@@ -59,8 +86,6 @@ public:
 	/// @throw StatusCode::FORBIDDEN if the file is not readable
     static void file_readable(const std::string& path);
 
-    static const std::unordered_map<std::string, std::string> CONTENT_TYPES;
-
     /// @brief Maps file extension to content type (MIME type)
     ///
     /// @param extension File extension
@@ -72,6 +97,8 @@ public:
     /// @param code Status code
     /// @return String representation of the status code
     static const std::string& code_to_string(StatusCode code);
+
+    static const std::unordered_map<std::string, std::string> CONTENT_TYPES;
 
 private:
     ssize_t _content_length;
