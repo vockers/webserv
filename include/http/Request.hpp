@@ -35,7 +35,6 @@ private:
     Method      _method;
     std::string _uri;
     std::string _query;
-    std::string _body;
     Headers     _headers;
     std::string _body;
     size_t      _content_length;

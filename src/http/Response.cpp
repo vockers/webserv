@@ -45,19 +45,6 @@ Response::Response(const Request& request, const Config& config, ErrorLogger& el
     this->code(StatusCode::OK);
     const Config& location = config.location(request.get_uri());
     std::string   path     = location.root() + request.get_uri();
-    if (path.ends_with("/")) {
-        try {
-            this->file(path + location.index());
-            return;
-        } catch (StatusCode status_code) {
-            if (location.autoindex()) {
-                this->autoindex(path, request.get_uri());
-                return;
-            } else {
-                throw status_code;
-            }
-        }
-    }
 
     std::string interpreter;
     if (CGI::is_cgi_request(path, interpreter)) {
@@ -73,7 +60,19 @@ Response::Response(const Request& request, const Config& config, ErrorLogger& el
 
     switch (request.get_method()) {
     case Request::Method::GET:
-        this->file(uri);
+        if (path.ends_with("/")) {
+            try {
+                this->file(path + location.index());
+            } catch (StatusCode status_code) {
+                if (location.autoindex()) {
+                    this->autoindex(path, request.get_uri());
+                } else {
+                    throw status_code;
+                }
+            }
+            break;
+        }
+        this->file(path);
         break;
     case Request::Method::POST:
         this->upload(request.get_uri(), request.body());

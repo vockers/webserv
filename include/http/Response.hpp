@@ -63,7 +63,7 @@ public:
     /// @param extension File extension
     Response& content_type(const std::string& extension);
     Response& upload(const std::string& uri, const std::string& body);
-    
+
     /// @brief Generates an autoindex page for a directory
     ///
     /// @param path Path to the directory

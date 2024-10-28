@@ -57,11 +57,6 @@ const std::string& Request::get_query() const
     return _query;
 }
 
-const std::string& Request::get_body() const
-{
-    return _body;
-}
-
 const std::string& Request::host() const
 {
     return _headers.at("host");
