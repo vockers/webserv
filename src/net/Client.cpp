@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include "http/CGI.hpp"
 #include "http/Response.hpp"
 #include "net/Server.hpp"
 #include "net/VirtualServer.hpp"

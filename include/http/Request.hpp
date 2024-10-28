@@ -21,6 +21,7 @@ public:
 
     Method             get_method() const;
     const std::string& get_uri() const;
+    const std::string& get_query() const;
     const Headers&     get_headers() const;
     const std::string& host() const;
     const std::string& body() const;
@@ -33,6 +34,8 @@ private:
 
     Method      _method;
     std::string _uri;
+    std::string _query;
+    std::string _body;
     Headers     _headers;
     std::string _body;
     size_t      _content_length;

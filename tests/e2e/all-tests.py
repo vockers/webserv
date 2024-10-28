@@ -72,6 +72,25 @@ def test_bad_request():
 
     assert response.status_code == 400
     assert response.headers['Content-Type'] == 'text/html'
+    
+def test_cgi_env():
+	expected_body = '''\
+HTTP_HOST: localhost:8080
+HTTP_USER_AGENT: python-requests/2.32.3
+HTTP_ACCEPT_ENCODING: gzip, deflate
+SERVER_PROTOCOL: HTTP/1.1
+QUERY_STRING: 
+HTTP_ACCEPT: */*
+REQUEST_URI: /cgi/env.py
+HTTP_CONNECTION: keep-alive
+REQUEST_METHOD: GET
+LC_CTYPE: C.UTF-8
+'''
+
+	response = requests.get(f'{BASE_URL}/cgi/env.py')
+
+	assert response.status_code == 200
+	assert response.text == expected_body	
 
 def test_missing_host():
     req = b"GET / HTTP/1.1\r\n\r\n"
@@ -127,3 +146,26 @@ def test_upload():
     response = requests.get(f'{BASE_URL}/upload/test.txt')
 
     assert response.status_code == 404
+
+def test_autoindex():
+    expected_body = '''\
+<!DOCTYPE html>
+<html lang=\"en-US\"><head><meta charset=\"utf-8\" />
+    <head>
+        <title>Index of /1/</title>
+    </head>
+    <body>
+        <h1>Index of /1/</h1>
+        <ul>
+            <li><a href="name.html">name.html</a></li>
+            <li><a href="hello.html">hello.html</a></li>
+        </ul>
+        <hr/><p style='text-align: center;'>webserv</p>
+    </body>
+</html>
+'''
+
+    response = requests.get(f'{BASE_URL}/1/')
+
+    assert response.status_code == 200
+    assert response.text == expected_body
