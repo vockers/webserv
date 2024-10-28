@@ -127,3 +127,26 @@ def test_second_server():
 
     assert response.status_code == 200
     assert response.text == "name in /\n"
+
+def test_autoindex():
+    expected_body = '''\
+<!DOCTYPE html>
+<html lang=\"en-US\"><head><meta charset=\"utf-8\" />
+    <head>
+        <title>Index of /1/</title>
+    </head>
+    <body>
+        <h1>Index of /1/</h1>
+        <ul>
+            <li><a href="name.html">name.html</a></li>
+            <li><a href="hello.html">hello.html</a></li>
+        </ul>
+        <hr/><p style='text-align: center;'>webserv</p>
+    </body>
+</html>
+'''
+
+    response = requests.get(f'{BASE_URL}/1/')
+
+    assert response.status_code == 200
+    assert response.text == expected_body
