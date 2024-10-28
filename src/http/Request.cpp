@@ -17,7 +17,7 @@ const Request::MethodMap Request::METHOD_MAP = {
 };
 // clang-format on
 
-Request::Request(const std::string& input)
+Request::Request(const std::string& input) : _content_length(0)
 {
     size_t headers_start = input.find("\r\n");
     size_t headers_end   = input.find("\r\n\r\n");
@@ -30,6 +30,11 @@ Request::Request(const std::string& input)
 
     std::string headers = input.substr(headers_start + 2, headers_end - headers_start);
     parse_headers(headers);
+
+    // Add remaining data as the body
+    if (_content_length > 0 && input.size() > headers_end + 4) {
+        _body = input.substr(headers_end + 4);
+    }
 }
 
 Request::Method Request::get_method() const
@@ -52,14 +57,24 @@ const std::string& Request::get_query() const
     return _query;
 }
 
-const std::string& Request::get_body() const
+const std::string& Request::host() const
+{
+    return _headers.at("host");
+}
+
+const std::string& Request::body() const
 {
     return _body;
 }
 
-const std::string& Request::host() const
+size_t Request::content_length() const
 {
-    return _headers.at("Host");
+    return _content_length;
+}
+
+void Request::append_body(const std::string& body)
+{
+    _body += body;
 }
 
 void Request::parse_line(const std::string& line)
@@ -109,13 +124,21 @@ void Request::parse_headers(const std::string& headers)
 
         std::string key   = header.substr(0, colon_pos);
         std::string value = header.substr(colon_pos + 2, header.size() - colon_pos - 3);
+        // field-name (key) is case-insensitive
+        std::transform(key.begin(), key.end(), key.begin(), ::tolower);
 
         _headers[key] = value;
     }
 
     // Host header is mandatory
-    if (_headers.find("Host") == _headers.end()) {
+    if (_headers.find("host") == _headers.end()) {
         throw StatusCode::BAD_REQUEST;
+    }
+
+    try {
+        _content_length = std::stoul(_headers.at("content-length"));
+    } catch (const std::exception& e) {
+        _content_length = 0;
     }
 }
 }  // namespace webserv::http

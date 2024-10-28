@@ -40,24 +40,11 @@ const std::unordered_map<std::string, std::string> Response::CONTENT_TYPES = {
 // clang-format on
 
 Response::Response(const Request& request, const Config& config, ErrorLogger& elog)
-    : _content_length(0), _elog(elog)
+    : _config(config), _content_length(0), _elog(elog)
 {
     this->code(StatusCode::OK);
     const Config& location = config.location(request.get_uri());
     std::string   path     = location.root() + request.get_uri();
-    if (path.ends_with("/")) {
-        try {
-            this->file(path + location.index());
-            return;
-        } catch (StatusCode status_code) {
-            if (location.autoindex()) {
-                this->autoindex(path, request.get_uri());
-                return;
-            } else {
-                throw status_code;
-            }
-        }
-    }
 
     std::string interpreter;
     if (CGI::is_cgi_request(path, interpreter)) {
@@ -65,16 +52,39 @@ Response::Response(const Request& request, const Config& config, ErrorLogger& el
             CGI cgi(request, path, interpreter);
             this->content_type("html");
             this->body(cgi.get_output());
+            return;
         } catch (StatusCode status_code) {
             throw status_code;
         }
-    } else {
+    }
+
+    switch (request.get_method()) {
+    case Request::Method::GET:
+    case Request::Method::DELETE:
+        if (path.ends_with("/")) {
+            try {
+                this->file(path + location.index());
+            } catch (StatusCode status_code) {
+                if (location.autoindex()) {
+                    this->autoindex(path, request.get_uri());
+                } else {
+                    throw status_code;
+                }
+            }
+            break;
+        }
         this->file(path);
+        break;
+    case Request::Method::POST:
+        this->upload_file(request.get_uri(), request.body());
+        break;
+    default:
+        throw StatusCode::NOT_IMPLEMENTED;
     }
 }
 
 Response::Response(StatusCode code, const Config& config, ErrorLogger& elog)
-    : _content_length(0), _elog(elog)
+    : _config(config), _content_length(0), _elog(elog)
 {
     try {
         std::string error_page_path = config.error_page(static_cast<int>(code));
@@ -135,6 +145,7 @@ Response& Response::file(const std::string& path)
     std::fstream file(path);
     if (!file.is_open()) {
         throw StatusCode::NOT_FOUND;
+        // TODO: Throw Forbidden if no read permission
     }
     std::stringstream ss;
     ss << file.rdbuf();
@@ -149,6 +160,39 @@ Response& Response::file(const std::string& path)
 Response& Response::content_type(const std::string& extension)
 {
     this->header("Content-Type", get_content_type(extension));
+
+    return *this;
+}
+
+Response& Response::upload_file(const std::string& uri, const std::string& body)
+{
+    std::string boundary = body.substr(0, body.find("\r\n"));
+    size_t      pos      = body.find("filename=\"") + 10;
+    std::string filename = body.substr(pos, body.find("\"", pos) - pos);
+    std::string data     = body.substr(body.find("\r\n\r\n") + 4);
+    data                 = data.substr(0, data.find(boundary) - 2);
+
+    const Config& location = _config.location(uri);
+
+    // Check if their is an upload directory
+    std::string path = "";
+    try {
+        path = location.upload_dir() + filename;
+    } catch (...) {
+        throw StatusCode::INTERNAL_SERVER_ERROR;
+        // TODO: Throw Forbidden if no upload directory
+    }
+
+    std::ofstream file(path);
+    if (!file.is_open()) {
+        throw StatusCode::INTERNAL_SERVER_ERROR;
+        // TODO: Throw Forbidden if no write permission
+    }
+
+    file << data;
+
+    this->content_type("txt");
+    this->body("File uploaded");
 
     return *this;
 }

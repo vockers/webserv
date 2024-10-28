@@ -62,12 +62,18 @@ public:
     ///
     /// @param extension File extension
     Response& content_type(const std::string& extension);
-    
-	/// @brief Generates an autoindex page for a directory
-	///
-	/// @param path Path to the directory
+
+    /// @brief Write request's multipart/form-data to a file
+    ///
     /// @param uri URI of the request
-	Response& autoindex(const std::string& path, const std::string& uri);
+    /// @param body Request body
+    Response& upload_file(const std::string& uri, const std::string& body);
+
+    /// @brief Generates an autoindex page for a directory
+    ///
+    /// @param path Path to the directory
+    /// @param uri URI of the request
+    Response& autoindex(const std::string& path, const std::string& uri);
 
     /// @brief Returns the Content-Length header value
     ///
@@ -75,15 +81,15 @@ public:
     ssize_t get_content_length() const;
 
     /// @brief Checks if a file exists
-	///
+    ///
     /// @param path Path to the file
-	/// @throw StatusCode::NOT_FOUND if the file does not exist
+    /// @throw StatusCode::NOT_FOUND if the file does not exist
     static void file_exist(const std::string& path);
 
-	/// @brief Checks if a file is readable
-	///
-	/// @param path Path to the file
-	/// @throw StatusCode::FORBIDDEN if the file is not readable
+    /// @brief Checks if a file is readable
+    ///
+    /// @param path Path to the file
+    /// @throw StatusCode::FORBIDDEN if the file is not readable
     static void file_readable(const std::string& path);
 
     /// @brief Maps file extension to content type (MIME type)
@@ -101,6 +107,8 @@ public:
     static const std::unordered_map<std::string, std::string> CONTENT_TYPES;
 
 private:
+    const Config& _config;
+
     ssize_t _content_length;
 
     ErrorLogger& _elog;

@@ -29,7 +29,8 @@ const std::map<std::string, Type> Config::TYPE_MAP = {
     {"autoindex",            AUTOINDEX},
     {"client_max_body_size", CLIENT_MAX_BODY_SIZE},
     {"return",               RETURN},
-    {"error_page",           ERROR_PAGE}
+    {"error_page",           ERROR_PAGE},
+    {"upload_dir",           UPLOAD_DIR}
 };
 
 // format: {{<allowed parents>, <unique>, [min params], [max params]}}
@@ -47,7 +48,8 @@ const Config::Constraint Config::CONSTRAINTS[] = {
     {{HTTP, SERVER, LOCATION}, true, 1, 1},      // AUTOINDEX
     {{HTTP, SERVER, LOCATION}, true, 1, 1},      // CLIENT_MAX_BODY_SIZE
     {{HTTP, SERVER, LOCATION}, true, 1, 2},      // RETURN
-    {{HTTP, SERVER, LOCATION}, false, 2}         // ERROR_PAGE
+    {{HTTP, SERVER, LOCATION}, false, 2},        // ERROR_PAGE
+    {{HTTP, SERVER, LOCATION}, true, 1, 1}       // UPLOAD_DIR
 };
 
 const Config::Parameters Config::DEFAULT_PARAMS[] = {
@@ -64,7 +66,8 @@ const Config::Parameters Config::DEFAULT_PARAMS[] = {
     {false},           // AUTOINDEX
     {1048576},         // CLIENT_MAX_BODY_SIZE (1MiB)
     {},                // RETURN
-    {}                 // ERROR_PAGE
+    {},                // ERROR_PAGE
+    {},                // UPLOAD_DIR
 };
 // clang-format on
 
@@ -255,6 +258,11 @@ const std::string& Config::error_page(int code) const
     }
 
     throw std::runtime_error("Error page not found");
+}
+
+const std::string& Config::upload_dir() const
+{
+    return this->value<std::string>(UPLOAD_DIR, 0);
 }
 
 int Config::listen() const
