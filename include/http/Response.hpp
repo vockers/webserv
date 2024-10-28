@@ -62,7 +62,12 @@ public:
     ///
     /// @param extension File extension
     Response& content_type(const std::string& extension);
-    Response& upload(const std::string& uri, const std::string& body);
+
+    /// @brief Write request's multipart/form-data to a file
+    ///
+    /// @param uri URI of the request
+    /// @param body Request body
+    Response& upload_file(const std::string& uri, const std::string& body);
 
     /// @brief Generates an autoindex page for a directory
     ///

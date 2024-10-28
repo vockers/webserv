@@ -60,6 +60,7 @@ Response::Response(const Request& request, const Config& config, ErrorLogger& el
 
     switch (request.get_method()) {
     case Request::Method::GET:
+    case Request::Method::DELETE:
         if (path.ends_with("/")) {
             try {
                 this->file(path + location.index());
@@ -75,7 +76,7 @@ Response::Response(const Request& request, const Config& config, ErrorLogger& el
         this->file(path);
         break;
     case Request::Method::POST:
-        this->upload(request.get_uri(), request.body());
+        this->upload_file(request.get_uri(), request.body());
         break;
     default:
         throw StatusCode::NOT_IMPLEMENTED;
@@ -163,7 +164,7 @@ Response& Response::content_type(const std::string& extension)
     return *this;
 }
 
-Response& Response::upload(const std::string& uri, const std::string& body)
+Response& Response::upload_file(const std::string& uri, const std::string& body)
 {
     std::string boundary = body.substr(0, body.find("\r\n"));
     size_t      pos      = body.find("filename=\"") + 10;

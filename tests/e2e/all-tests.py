@@ -169,3 +169,9 @@ def test_autoindex():
 
     assert response.status_code == 200
     assert response.text == expected_body
+
+def test_delete_method():
+    response = requests.delete(f'{BASE_URL}/2/')
+
+    assert response.status_code == 200
+    assert response.text == "hello in /2\n"
