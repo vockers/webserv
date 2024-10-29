@@ -40,7 +40,7 @@ const Config::Constraint Config::CONSTRAINTS[] = {
     {{HTTP}, false, nullopt, 0},                 // SERVER
     {{SERVER}, false, 1},                        // LOCATION
     {{SERVER}, false, 1},                        // SERVER_NAME
-    {{SERVER}, false, 1},                        // LISTEN
+    {{SERVER}, false, 1, 2},                     // LISTEN
     {{HTTP, SERVER, LOCATION}, true, 1, 1},      // ROOT
     {{HTTP, SERVER, LOCATION}, true, 1},         // INDEX
     {{MAIN}, true, 1, 1},                        // LOG_LEVEL
@@ -58,7 +58,7 @@ const Config::Parameters Config::DEFAULT_PARAMS[] = {
     {},                // SERVER
     {},                // LOCATION
     {""},              // SERVER_NAME
-    {80},              // LISTEN
+    {80, "0.0.0.0"},   // LISTEN
     {"./www/default"}, // ROOT
     {"index.html"},    // INDEX
     {"info"},          // LOG_LEVEL
@@ -224,6 +224,11 @@ const std::string& Config::server_name() const
     return this->value<std::string>(SERVER_NAME, 0);
 }
 
+const std::string& Config::host() const
+{
+    return this->value<std::string>(LISTEN, 1);
+}
+
 const std::string& Config::root() const
 {
     return this->value<std::string>(ROOT, 0);
@@ -265,7 +270,7 @@ const std::string& Config::upload_dir() const
     return this->value<std::string>(UPLOAD_DIR, 0);
 }
 
-int Config::listen() const
+int Config::port() const
 {
     return this->value<int>(LISTEN, 0);
 }

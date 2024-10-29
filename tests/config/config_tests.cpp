@@ -24,7 +24,8 @@ TEST(ConfigTests, ConfigTest)
     EXPECT_EQ(server.get_type(), Type::SERVER);
 
     EXPECT_EQ(server.server_name(), "localhost");
-    EXPECT_EQ(server.listen(), 8080);
+    EXPECT_EQ(server.port(), 8080);
+    EXPECT_EQ(server.host(), "127.0.0.1");
     EXPECT_EQ(server.error_page(404), "/404.html");
 
     auto& location = server.location("/l");
@@ -69,7 +70,7 @@ TEST(ConfigTests, ErrorHandling)
 
     auto& server = *http.get_children()[0];
     EXPECT_THROW(server.value<std::string>(Type::SERVER_NAME, 1), std::runtime_error);
-    EXPECT_THROW(server.value<int>(Type::LISTEN, 1), std::runtime_error);
+    EXPECT_THROW(server.value<int>(Type::LISTEN, 2), std::runtime_error);
     EXPECT_THROW(server.value<std::string>(Type::ROOT, 1), std::runtime_error);
 }
 
