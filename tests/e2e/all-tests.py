@@ -197,3 +197,9 @@ def test_limit_except():
     response = requests.get(f'{BASE_URL}/3/')
 
     assert response.status_code == 200
+
+def test_redirect():
+    response = requests.get(f'{BASE_URL}/redirect')
+
+    assert response.status_code == 200
+    assert response.text == "hello from /redirected.html\n"
