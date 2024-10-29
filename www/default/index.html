@@ -1,15 +1,113 @@
 <!DOCTYPE html>
-<html>
-  <head>
+<html lang="en">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home - Webserv</title>
-    <link rel="stylesheet" type="text/css" href="css/style.css">
+    <title>Webserv</title>
     <link rel="icon" type="image/x-icon" href="images/favicon.ico">
-  </head>
-  <body>
-    <h1 class="title">Welcome to 42 Webserv!</h1>
-
-    <p>Kusjes van Vincentje en Eefje <3 </p>
-  </body>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            height: 100vh;
+            margin: 0;
+            background: radial-gradient(circle, #1e1e2f, #15151f);
+            font-family: 'Courier New', Courier, monospace;
+            color: #00ffcc;
+        }
+        h1.title {
+            color: #00ffcc;
+            margin-top: 0;
+        }
+        .ascii-banner {
+            font-size: 18px;
+            white-space: pre;
+            animation: pulse 1.5s ease-in-out infinite alternate;
+            color: #00ffcc;
+            text-shadow: 0 0 5px #00ffcc, 0 0 10px #00ffcc, 0 0 15px #00ffcc, 0 0 20px #0ff9bb;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); color: #00ffcc; }
+            100% { transform: scale(1.1); color: #ff66cc; }
+        }
+        .upload-section, .view-files-section {
+            margin-top: 20px;
+            text-align: center;
+            color: #00ffcc;
+        }
+        .upload-button, .view-files-button {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #333;
+            color: #00ffcc;
+            padding: 10px 20px;
+            border: 1px solid #00ffcc;
+            border-radius: 5px;
+            cursor: not-allowed;
+            opacity: 0.5;
+            transition: background-color 0.3s, opacity 0.3s;
+        }
+        .upload-button.enabled, .view-files-button {
+            cursor: pointer;
+            opacity: 1;
+        }
+        .upload-button.enabled:hover, .view-files-button:hover {
+            background-color: #00ffcc;
+            color: #333;
+        }
+        .info {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #ccc;
+            font-weight: bold;
+        }
+        .neon {
+            color: #ff66cc;
+            text-shadow: 0 0 5px #ff66cc, 0 0 10px #ff66cc, 0 0 15px #ff66cc, 0 0 20px #e60073;
+        }
+    </style>
+    <script>
+        function checkFileSelected() {
+            const fileInput = document.getElementById("file");
+            const uploadButton = document.getElementById("uploadButton");
+            uploadButton.disabled = !fileInput.files.length;
+            uploadButton.classList.toggle("enabled", fileInput.files.length > 0);
+        }
+    </script>
+</head>
+<body>
+    <div class="ascii-banner">
+        <pre>
+                                  mm                                              
+*@@@@*     @     *@@@*          m@@                                              
+  *@@     m@@     m@             @@                                              
+   @@m   m@@@m   m@     mm@*@@   @@m@@@@m   m@@*@@@  mm@*@@ *@@@m@@@ *@@*   *@@* 
+    @@m  @* @@m  @*    m@*   @@  @@    *@@  @@   ** m@*   @@  @@* **   @@   m@   
+    !@@ @*  *@@ @*     !@******  !@     @@  *@@@@@m !@******  @!        @@ m@    
+     !@@m    !@@m      !@m    m  !!!   m@!       @@ !@m    m  @!         !@@     
+     !!@!*   !!@!*     !!******  !!     !!  *!   @! !!******  !!         !@!     
+     !!!!    !!!!      :!!       :!!   !!!  !!   !! :!!       !:         !!!     
+      :       :         : : ::   : : : ::   : :!:    : : :: : :::         : 
+        </pre>
+    </div>
+	<div class="info">
+        <p class="neon">Greetings from Vincent and Eva</p>
+		<br><br>
+	</div>
+    <div class="upload-section">
+        <form action="upload/" method="POST" enctype="multipart/form-data">
+            <label for="file">Choose a file to upload:</label><br>
+            <input type="file" name="files[]" id="file" multiple onchange="checkFileSelected()"><br><br>
+            <button type="submit" class="upload-button" id="uploadButton" disabled>Upload</button>
+        </form>
+		<br>
+    </div>
+    <div class="view-files-section">
+        <a href="/upload/">
+            <button type="button" class="view-files-button">View Uploaded Files</button>
+        </a>
+    </div>
+</body>
 </html>

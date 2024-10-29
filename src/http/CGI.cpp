@@ -23,8 +23,10 @@ CGI::CGI(const Request& request, const std::string& uri, const std::string& inte
         throw code;
     }
 
-    int pipe_fd[2];
-    if (pipe(pipe_fd) == -1) {
+    int stdin_pipe[2];
+    int stdout_pipe[2];
+    if (pipe(stdout_pipe) == -1 ||
+        (request.get_method() == Request::Method::POST && pipe(stdin_pipe) == -1)) {
         throw Response::StatusCode::INTERNAL_SERVER_ERROR;
     }
 
@@ -34,19 +36,32 @@ CGI::CGI(const Request& request, const std::string& uri, const std::string& inte
     }
 
     if (pid == 0) {
-        close(pipe_fd[0]);
-        dup2(pipe_fd[1], STDOUT_FILENO);
-        close(pipe_fd[1]);
+        close(stdout_pipe[0]);
+        dup2(stdout_pipe[1], STDOUT_FILENO);
+        close(stdout_pipe[1]);
+
+        if (request.get_method() == Request::Method::POST) {
+            close(stdin_pipe[1]);
+            dup2(stdin_pipe[0], STDIN_FILENO);
+            close(stdin_pipe[0]);
+        }
 
         char** env    = create_envp();
         char*  argv[] = {
             const_cast<char*>(interpreter.c_str()), const_cast<char*>(uri.c_str()), nullptr};
+
         if (execve(interpreter.c_str(), argv, env) == -1) {
             free_envp(env);
             exit(EXIT_FAILURE);
         }
     } else {
-        close(pipe_fd[1]);
+        close(stdout_pipe[1]);
+
+        if (request.get_method() == Request::Method::POST) {
+            close(stdin_pipe[0]);
+            write(stdin_pipe[1], request.body().data(), request.body().size());
+            close(stdin_pipe[1]);
+        }
 
         int status;
         waitpid(pid, &status, 0);
@@ -57,10 +72,10 @@ CGI::CGI(const Request& request, const std::string& uri, const std::string& inte
         char    buffer[BUFSIZE];
         ssize_t bytes_read;
         _output.clear();
-        while ((bytes_read = read(pipe_fd[0], buffer, BUFSIZE)) > 0) {
+        while ((bytes_read = read(stdout_pipe[0], buffer, BUFSIZE)) > 0) {
             _output.append(buffer, bytes_read);
         }
-        close(pipe_fd[0]);
+        close(stdout_pipe[0]);
     }
 }
 
@@ -81,7 +96,10 @@ char** CGI::create_envp() const
     std::unordered_map<std::string, std::string> env_map;
 
     // Add standard CGI environment variables from the Request object
-    env_map["REQUEST_METHOD"]  = (_request.get_method() == Request::Method::GET) ? "GET" : "POST";
+    env_map["REQUEST_METHOD"] = (_request.get_method() == Request::Method::GET) ? "GET" : "POST";
+    if (_request.get_method() == Request::Method::POST) {
+        env_map["CONTENT_LENGTH"] = std::to_string(_request.body().size());
+    }
     env_map["REQUEST_URI"]     = _request.get_uri();
     env_map["QUERY_STRING"]    = _request.get_query();
     env_map["SERVER_PROTOCOL"] = "HTTP/1.1";

@@ -105,6 +105,8 @@ public:
     static const std::string& code_to_string(StatusCode code);
 
     static const std::unordered_map<std::string, std::string> CONTENT_TYPES;
+    bool                                                      is_cgi(const std::string& uri);
+    void generate_response_page(const std::string& path);
 
 private:
     const Config& _config;

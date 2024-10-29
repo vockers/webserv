@@ -7,6 +7,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <sstream>
 
 #include "http/CGI.hpp"
 #include "http/Request.hpp"
@@ -76,7 +77,9 @@ Response::Response(const Request& request, const Config& config, ErrorLogger& el
         this->file(path);
         break;
     case Request::Method::POST:
-        this->upload_file(request.get_uri(), request.body());
+        if (!CGI::is_cgi_request(path, interpreter)) {
+            this->upload_file(request.get_uri(), request.body());
+        }
         break;
     default:
         throw StatusCode::NOT_IMPLEMENTED;
@@ -164,6 +167,33 @@ Response& Response::content_type(const std::string& extension)
     return *this;
 }
 
+bool Response::is_cgi(const std::string& uri)
+{
+    // same as in CGI::is_cgi_request but without the interpreter...
+    std::string ext      = ".py";
+    int         ext_size = ext.size();
+
+    if (uri.size() >= ext.size() && uri.compare(uri.size() - ext_size, ext_size, ext) == 0) {
+        return true;
+    }
+    return false;
+}
+
+void Response::generate_response_page(const std::string& path)
+{
+    std::ifstream file(path);
+    if (!file.is_open()) {
+        throw StatusCode::INTERNAL_SERVER_ERROR;
+    }
+
+    std::string html_content((std::istreambuf_iterator<char>(file)),
+                             std::istreambuf_iterator<char>());
+    file.close();
+
+    this->content_type("html");
+    this->body(html_content);
+}
+
 Response& Response::upload_file(const std::string& uri, const std::string& body)
 {
     std::string boundary = body.substr(0, body.find("\r\n"));
@@ -183,16 +213,20 @@ Response& Response::upload_file(const std::string& uri, const std::string& body)
         // TODO: Throw Forbidden if no upload directory
     }
 
-    std::ofstream file(path);
-    if (!file.is_open()) {
+    int permissions = is_cgi(path) ? 0755 : 0644;
+
+    int fd = open(path.c_str(), O_CREAT | O_WRONLY | O_TRUNC, permissions);
+    if (fd == -1) {
         throw StatusCode::INTERNAL_SERVER_ERROR;
-        // TODO: Throw Forbidden if no write permission
     }
 
-    file << data;
+    if (::write(fd, data.c_str(), data.size()) == -1) {
+        close(fd);
+        throw StatusCode::INTERNAL_SERVER_ERROR;
+    }
+    close(fd);
 
-    this->content_type("txt");
-    this->body("File uploaded");
+    generate_response_page("www/default/upload_success.html");
 
     return *this;
 }
@@ -245,51 +279,53 @@ void Response::file_readable(const std::string& path)
     }
 }
 
+void replace_placeholder(std::string&       html,
+                         const std::string& placeholder,
+                         const std::string& value)
+{
+    size_t pos = 0;
+    while ((pos = html.find(placeholder, pos)) != std::string::npos) {
+        html.replace(pos, placeholder.length(), value);
+        pos += value.length();
+    }
+}
+
 Response& Response::autoindex(const std::string& path, const std::string& uri)
 {
+    std::ifstream template_file("www/default/autoindex.html");
+    if (!template_file.is_open()) {
+        throw StatusCode::INTERNAL_SERVER_ERROR;
+    }
+
+    std::stringstream buffer;
+    buffer << template_file.rdbuf();
+    template_file.close();
+    std::string html = buffer.str();
+
+    replace_placeholder(html, "{{URI}}", uri);
+
     DIR* dir = opendir(path.c_str());
     if (!dir) {
         throw StatusCode::FORBIDDEN;
     }
 
-    // clang-format off
-	std::string html = "<!DOCTYPE html>\n"
-                       "<html lang=\"en-US\"><head><meta charset=\"utf-8\" />\n"
-                       "    <head>\n"
-                       "        <title>Index of " + uri + "</title>\n"
-                       "    </head>\n"
-                       "    <body>\n"
-                       "        <h1>Index of " + uri + "</h1>\n"
-                       "        <ul>\n";
-    // clang-format on
-
+    std::string    entries;
     struct dirent* entry;
     while ((entry = readdir(dir)) != nullptr) {
         std::string name = entry->d_name;
-
         if (name == "." || name == "..")
             continue;
 
-        std::string full_path = path + "/" + name;
-
+        std::string entry_path = uri + "/" + name;
         struct stat file_stat;
-        if (stat(full_path.c_str(), &file_stat) == 0) {
-            html += "            <li><a href=\"" + name;
-            if (S_ISDIR(file_stat.st_mode)) {
-                html += "/";
-            }
-            html += "\">" + name + "</a></li>\n";
+        if (stat((path + "/" + name).c_str(), &file_stat) == 0) {
+            entries += "<li><a href=\"" + entry_path + (S_ISDIR(file_stat.st_mode) ? "/" : "") +
+                       "\">" + name + "</a></li>\n";
         }
     }
-
     closedir(dir);
 
-    // clang-format off
-    html += "        </ul>\n"
-            "        <hr/><p style='text-align: center;'>webserv</p>\n"
-            "    </body>\n"
-            "</html>\n";
-    // clang-format on
+    replace_placeholder(html, "{{DIRECTORY_ENTRIES}}", entries);
 
     this->content_type("html");
     this->body(html);
