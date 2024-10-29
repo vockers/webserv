@@ -58,10 +58,9 @@ Response::Response(const Request& request, const Config& config, ErrorLogger& el
             throw status_code;
         }
     }
-
     switch (request.get_method()) {
-    case Request::Method::GET:
     case Request::Method::DELETE:
+    case Request::Method::GET:
         if (path.ends_with("/")) {
             try {
                 this->file(path + location.index());
@@ -79,7 +78,7 @@ Response::Response(const Request& request, const Config& config, ErrorLogger& el
     case Request::Method::POST:
         if (!CGI::is_cgi_request(path, interpreter)) {
             this->upload_file(request.get_uri(), request.body());
-        }
+		}
         break;
     default:
         throw StatusCode::NOT_IMPLEMENTED;
@@ -96,23 +95,40 @@ Response::Response(StatusCode code, const Config& config, ErrorLogger& elog)
         this->file(location.root() + error_page_path);
     } catch (...) {
         const std::string& code_str = code_to_string(code);
-        // clang-format off
-        std::string error_page =
-        "<!DOCTYPE html>\n"
-        "<html lang=\"en-US\"><head><meta charset=\"utf-8\" />\n"
-        "    <head>\n"
-        "        <title>" + code_str + "</title>\n"
-        "    </head>\n"
-        "    <body>\n"
-        "        <h1 align=\"center\">" + code_str + "</h1>\n"
-        "        <p align=\"center\">webserv</p>\n"
-        "    </body>\n"
-        "</html>\n";
-        // clang-format on
+
+		std::ifstream template_file("www/default/error.html");
+		if (!template_file.is_open()) {
+			// clang-format off
+			std::string error_page =
+			"<!DOCTYPE html>\n"
+			"<html lang=\"en-US\"><head><meta charset=\"utf-8\" />\n"
+			"    <head>\n"
+			"        <title>" + code_str + "</title>\n"
+			"    </head>\n"
+			"    <body>\n"
+			"        <h1 align=\"center\">" + code_str + "</h1>\n"
+			"        <p align=\"center\">webserv</p>\n"
+			"    </body>\n"
+			"</html>\n";
+			// clang-format on
+
+			this->code(code_str);
+			this->content_type("html");
+			this->body(error_page);
+			return ;
+		}
+		std::stringstream buffer;
+		buffer << template_file.rdbuf();
+		
+		template_file.close();
+
+		std::string html = buffer.str();
+		size_t	  pos  = html.find("{{STATUS_CODE}}");
+		html.replace(pos, 15, code_str);
 
         this->code(code_str);
         this->content_type("html");
-        this->body(error_page);
+		this->body(html);
     }
 }
 
@@ -253,6 +269,7 @@ const std::string& Response::code_to_string(StatusCode code)
     // clang-format off
     static const std::unordered_map<StatusCode, std::string>  STATUS_CODES = {
         { StatusCode::OK, "200 OK" },
+		{ StatusCode::CREATED, "201 Created" },
         { StatusCode::BAD_REQUEST, "400 Bad Request" },
 		{ StatusCode::FORBIDDEN, "403 Forbidden" },
         { StatusCode::NOT_FOUND, "404 Not Found" },
