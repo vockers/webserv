@@ -222,6 +222,7 @@ const std::string& Response::code_to_string(StatusCode code)
         { StatusCode::BAD_REQUEST, "400 Bad Request" },
 		{ StatusCode::FORBIDDEN, "403 Forbidden" },
         { StatusCode::NOT_FOUND, "404 Not Found" },
+        { StatusCode::REQUEST_ENTITY_TOO_LARGE, "413 Request Entity Too Large" },
         { StatusCode::INTERNAL_SERVER_ERROR, "500 Internal Server Error" },
         { StatusCode::NOT_IMPLEMENTED, "501 Not Implemented" },
         { StatusCode::HTTP_VERSION_NOT_SUPPORTED, "505 HTTP Version Not Supported" },

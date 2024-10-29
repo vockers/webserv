@@ -51,5 +51,6 @@ private:
     void parse_headers(const std::string& headers);
 
     static const MethodMap METHOD_MAP;
+    static constexpr int   HEADER_LIMIT = 8192;
 };
 }  // namespace webserv::http

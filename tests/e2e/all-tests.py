@@ -175,3 +175,16 @@ def test_delete_method():
 
     assert response.status_code == 200
     assert response.text == "hello in /2\n"
+
+def test_max_body_size():
+    req = b"GET /2/hello.html HTTP/1.1\r\nHost: localhost\r\nContent-Length: 11\r\n\r\nhello world"
+
+    response = requests_raw.raw(url=BASE_URL, data=req)
+
+    assert response.status_code == 413
+
+    req = b"GET /2/hello.html HTTP/1.1\r\nHost: localhost\r\nContent-Length: 10\r\n\r\nhello worl"
+
+    response = requests_raw.raw(url=BASE_URL, data=req)
+
+    assert response.status_code == 200

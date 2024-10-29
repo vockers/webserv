@@ -2,7 +2,6 @@
 
 #include <iostream>
 
-#include "http/CGI.hpp"
 #include "http/Response.hpp"
 #include "net/Server.hpp"
 #include "net/VirtualServer.hpp"
@@ -75,6 +74,12 @@ Promise<StatusCode> Client::read_request()
 
         // Check if the request body is complete
         if (_request) {
+            int client_max_body_size = _server.get_config(_request->host())
+                                           .location(_request->get_uri())
+                                           .client_max_body_size();
+            if (_request->body().size() > client_max_body_size) {
+                return StatusCode::REQUEST_ENTITY_TOO_LARGE;
+            }
             if (_request->chunked() &&
                 _request->body().find("\r\n0\r\n\r\n") != std::string::npos) {
                 _request->unchunk_body();
