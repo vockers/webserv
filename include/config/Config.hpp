@@ -139,6 +139,7 @@ public:
     const std::string& upload_dir() const;
 
     int  listen() const;
+    bool limit_except(const std::string& method) const;
     bool autoindex() const;
     int  client_max_body_size() const;
 

@@ -188,3 +188,12 @@ def test_max_body_size():
     response = requests_raw.raw(url=BASE_URL, data=req)
 
     assert response.status_code == 200
+
+def test_limit_except():
+    response = requests.delete(f'{BASE_URL}/3/')
+
+    assert response.status_code == 405
+
+    response = requests.get(f'{BASE_URL}/3/')
+
+    assert response.status_code == 200

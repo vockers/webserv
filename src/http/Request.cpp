@@ -42,6 +42,17 @@ Request::Method Request::get_method() const
     return _method;
 }
 
+const std::string& Request::method_str() const
+{
+    static const std::map<Method, std::string> METHOD_STR = {
+        {Method::GET, "GET"},
+        {Method::POST, "POST"},
+        {Method::DELETE, "DELETE"},
+    };
+
+    return METHOD_STR.at(_method);
+}
+
 const Request::Headers& Request::get_headers() const
 {
     return _headers;

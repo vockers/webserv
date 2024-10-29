@@ -46,6 +46,13 @@ Response::Response(const Request& request, const Config& config, ErrorLogger& el
     const Config& location = config.location(request.get_uri());
     std::string   path     = location.root() + request.get_uri();
 
+    if (request.body().size() > location.client_max_body_size()) {
+        throw StatusCode::REQUEST_ENTITY_TOO_LARGE;
+    }
+    if (location.limit_except(request.method_str()) == false) {
+        throw StatusCode::METHOD_NOT_ALLOWED;
+    }
+
     std::string interpreter;
     if (CGI::is_cgi_request(path, interpreter)) {
         try {
@@ -222,6 +229,7 @@ const std::string& Response::code_to_string(StatusCode code)
         { StatusCode::BAD_REQUEST, "400 Bad Request" },
 		{ StatusCode::FORBIDDEN, "403 Forbidden" },
         { StatusCode::NOT_FOUND, "404 Not Found" },
+        { StatusCode::METHOD_NOT_ALLOWED, "405 Method Not Allowed" },
         { StatusCode::REQUEST_ENTITY_TOO_LARGE, "413 Request Entity Too Large" },
         { StatusCode::INTERNAL_SERVER_ERROR, "500 Internal Server Error" },
         { StatusCode::NOT_IMPLEMENTED, "501 Not Implemented" },

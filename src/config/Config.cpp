@@ -270,6 +270,22 @@ int Config::listen() const
     return this->value<int>(LISTEN, 0);
 }
 
+bool Config::limit_except(const std::string& method) const
+{
+    const Config* config = this->get(Type::LIMIT_EXCEPT);
+    if (config == nullptr) {
+        return true;
+    }
+
+    for (const auto& param : config->get_parameters()) {
+        if (std::get<std::string>(param) == method) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 bool Config::autoindex() const
 {
     return this->value<bool>(AUTOINDEX, 0);
