@@ -75,12 +75,17 @@ Promise<StatusCode> Client::read_request()
 
         // Check if the request body is complete
         if (_request) {
-            if (_request->content_length() == _request->body().size()) {
+            if (_request->chunked() &&
+                _request->body().find("\r\n0\r\n\r\n") != std::string::npos) {
+                _request->unchunk_body();
                 return StatusCode::OK;
-            } else if (_request->content_length() < _request->body().size()) {
-                return StatusCode::BAD_REQUEST;
+            } else {
+                if (_request->content_length() == _request->body().size()) {
+                    return StatusCode::OK;
+                } else if (_request->content_length() < _request->body().size()) {
+                    return StatusCode::BAD_REQUEST;
+                }
             }
-
             return std::nullopt;
         }
 
@@ -88,7 +93,7 @@ Promise<StatusCode> Client::read_request()
         if (_request_str.find("\r\n\r\n") != std::string::npos) {
             try {
                 _request.reset(new Request(_request_str));
-                if (_request->content_length() > 0) {
+                if (_request->chunked() || _request->content_length() > 0) {
                     return std::nullopt;
                 }
                 return StatusCode::OK;
