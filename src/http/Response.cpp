@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -75,7 +76,6 @@ Response::Response(const Request& request, const Config& config, ErrorLogger& el
         }
     }
     switch (request.get_method()) {
-    case Request::Method::DELETE:
     case Request::Method::GET:
         if (path.ends_with("/")) {
             try {
@@ -93,6 +93,9 @@ Response::Response(const Request& request, const Config& config, ErrorLogger& el
         break;
     case Request::Method::POST:
         this->upload_file(request.get_uri(), request.body());
+        break;
+    case Request::Method::DELETE:
+        this->delete_file(request.get_uri());
         break;
     default:
         throw StatusCode::NOT_IMPLEMENTED;
@@ -266,6 +269,31 @@ Response& Response::upload_file(const std::string& uri, const std::string& body)
     return *this;
 }
 
+Response& Response::delete_file(const std::string& uri)
+{
+    const Config& location = _config.location(uri);
+    std::string   path     = location.root() + uri;
+
+    file_exist(path);
+    file_readable(path);
+
+    if (path == location.root() + location.upload_dir()) {
+        throw StatusCode::FORBIDDEN;
+    }
+
+    if (std::filesystem::remove(path) == false) {
+        throw StatusCode::INTERNAL_SERVER_ERROR;
+    }
+
+    try {
+        generate_response_page("www/default/deletion_success.html");
+    } catch (...) {
+        this->content_type("html");
+        this->body("File deleted successfully");
+    }
+    return *this;
+}
+
 ssize_t Response::get_content_length() const
 {
     return _content_length;
@@ -288,10 +316,10 @@ const std::string& Response::code_to_string(StatusCode code)
     // clang-format off
     static const std::unordered_map<StatusCode, std::string>  STATUS_CODES = {
         { StatusCode::OK, "200 OK" },
-		    { StatusCode::CREATED, "201 Created" },
+		{ StatusCode::CREATED, "201 Created" },
         { StatusCode::MOVED_PERMANENTLY, "301 Moved Permanently" },
         { StatusCode::BAD_REQUEST, "400 Bad Request" },
-		    { StatusCode::FORBIDDEN, "403 Forbidden" },
+		{ StatusCode::FORBIDDEN, "403 Forbidden" },
         { StatusCode::NOT_FOUND, "404 Not Found" },
         { StatusCode::METHOD_NOT_ALLOWED, "405 Method Not Allowed" },
         { StatusCode::REQUEST_ENTITY_TOO_LARGE, "413 Request Entity Too Large" },
@@ -353,7 +381,7 @@ Response& Response::autoindex_buildin(const std::string& path, const std::string
     struct dirent* entry;
     while ((entry = readdir(dir)) != nullptr) {
         std::string name = entry->d_name;
-        if (name == "." || name == "..")
+        if (name == "." || name == ".." || name == ".gitignore")
             continue;
 
         std::string entry_path = uri + name;
@@ -400,7 +428,7 @@ Response& Response::autoindex(const std::string& path, const std::string& uri)
     struct dirent* entry;
     while ((entry = readdir(dir)) != nullptr) {
         std::string name = entry->d_name;
-        if (name == "." || name == "..")
+        if (name == "." || name == ".." || name == ".gitignore")
             continue;
 
         std::string entry_path = uri + name;

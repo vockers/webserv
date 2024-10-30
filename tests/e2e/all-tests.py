@@ -146,11 +146,28 @@ def test_autoindex():
     assert "<a href=\"/1/hello.html\">hello.html</a>" in response.text
 
 def test_delete_method():
-    response = requests.delete(f'{BASE_URL}/2/')
+    file_data = {'file': ('test_delete.txt', 'sample content\n')}
+    upload_response = requests.post(f'{BASE_URL}/upload/', files=file_data)
 
-    assert response.status_code == 200
-    assert response.text == "hello in /2\n"
+    assert upload_response.status_code == 200
+    assert "File Uploaded Successfully!" in upload_response.text
+
+    get_response = requests.get(f'{BASE_URL}/upload/test_delete.txt')
+    assert get_response.status_code == 200
+    assert get_response.text == "sample content\n"
+
+    delete_response = requests.delete(f'{BASE_URL}/upload/test_delete.txt')
+
+    assert delete_response.status_code == 200
+    assert "File Deleted Successfully" in delete_response.text
+
+    confirm_deletion_response = requests.get(f'{BASE_URL}/upload/test_delete.txt')
+    assert confirm_deletion_response.status_code == 404
     
+    delete_not_found_response = requests.delete(f'{BASE_URL}/upload/not_found.txt')
+    assert delete_not_found_response.status_code == 404
+
+
 def test_cgi_body():
 	url = f'{BASE_URL}/cgi/body.py'
 	data = "hello world"

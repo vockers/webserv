@@ -37,7 +37,7 @@
             text-align: center;
             color: #00ffcc;
         }
-        .upload-button, .view-files-button {
+        .upload-button, .view-files-button, .remove-button {
             font-family: 'Courier New', Courier, monospace;
             background-color: #333;
             color: #00ffcc;
@@ -48,11 +48,11 @@
             opacity: 0.5;
             transition: background-color 0.3s, opacity 0.3s;
         }
-        .upload-button.enabled, .view-files-button {
+        .upload-button.enabled, .view-files-button, .remove-button.enabled {
             cursor: pointer;
             opacity: 1;
         }
-        .upload-button.enabled:hover, .view-files-button:hover {
+        .upload-button.enabled:hover, .view-files-button:hover, .remove-button:hover {
             background-color: #00ffcc;
             color: #333;
         }
@@ -69,11 +69,51 @@
         }
     </style>
     <script>
-        function checkFileSelected() {
+        // function checkFileSelected() {
+        //     const fileInput = document.getElementById("file");
+        //     const uploadButton = document.getElementById("uploadButton");
+        //     uploadButton.disabled = !fileInput.files.length;
+        //     uploadButton.classList.toggle("enabled", fileInput.files.length > 0);
+        // }
+		function checkFileSelected() {
             const fileInput = document.getElementById("file");
             const uploadButton = document.getElementById("uploadButton");
-            uploadButton.disabled = !fileInput.files.length;
-            uploadButton.classList.toggle("enabled", fileInput.files.length > 0);
+            const deleteButton = document.getElementById("deleteButton");
+            const hasFile = fileInput.files.length > 0;
+
+            uploadButton.disabled = !hasFile;
+            deleteButton.disabled = !hasFile;
+
+            uploadButton.classList.toggle("enabled", hasFile);
+            deleteButton.classList.toggle("enabled", hasFile);
+        }
+
+        function deleteFile() {
+            const fileInput = document.getElementById("file");
+            const fileName = fileInput.files[0]?.name;
+
+            if (!fileName) {
+                alert("No file selected to delete.");
+                return;
+            }
+
+            fetch(`/upload/${encodeURIComponent(fileName)}`, {
+                method: 'DELETE'
+            })
+            .then(response => {
+                if (response.ok) {
+					return response.text().then(html => document.body.innerHTML = html);
+                } else {
+					return response.text().then(html => document.body.innerHTML = html);
+                }
+            })
+            .catch(error => console.error("Error:", error));
+        }
+
+        function clearFileInput() {
+            const fileInput = document.getElementById("file");
+            fileInput.value = "";
+            checkFileSelected();
         }
     </script>
 </head>
@@ -100,7 +140,8 @@
         <form action="upload/" method="POST" enctype="multipart/form-data">
             <label for="file">Choose a file to upload:</label><br>
             <input type="file" name="files[]" id="file" multiple onchange="checkFileSelected()"><br><br>
-            <button type="submit" class="upload-button" id="uploadButton" disabled>Upload</button>
+            <button type="submit" class="upload-button" id="uploadButton" disabled>Upload File</button>
+			<button type="button" class="remove-button" id="deleteButton" onclick="deleteFile()" disabled>Delete File</button>
         </form>
 		<br>
     </div>

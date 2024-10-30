@@ -73,6 +73,11 @@ public:
     /// @param body Request body
     Response& upload_file(const std::string& uri, const std::string& body);
 
+    /// @brief Delete a file
+    ///
+    /// @param uri URI of the request
+    Response& delete_file(const std::string& uri);
+
     /// @brief Generates an autoindex page for a directory with a html template
     ///
     /// @param path Path to the directory
