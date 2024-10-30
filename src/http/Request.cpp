@@ -17,7 +17,7 @@ const Request::MethodMap Request::METHOD_MAP = {
 };
 // clang-format on
 
-Request::Request(const std::string& input) : _content_length(0)
+Request::Request(const std::string& input) : _content_length(0), _chunked(false)
 {
     size_t headers_start = input.find("\r\n");
     size_t headers_end   = input.find("\r\n\r\n");
@@ -32,7 +32,7 @@ Request::Request(const std::string& input) : _content_length(0)
     parse_headers(headers);
 
     // Add remaining data as the body
-    if (_content_length > 0 && input.size() > headers_end + 4) {
+    if (this->chunked() || _content_length > 0 && input.size() > headers_end + 4) {
         _body = input.substr(headers_end + 4);
     }
 }
@@ -40,6 +40,17 @@ Request::Request(const std::string& input) : _content_length(0)
 Request::Method Request::get_method() const
 {
     return _method;
+}
+
+const std::string& Request::method_str() const
+{
+    static const std::map<Method, std::string> METHOD_STR = {
+        {Method::GET, "GET"},
+        {Method::POST, "POST"},
+        {Method::DELETE, "DELETE"},
+    };
+
+    return METHOD_STR.at(_method);
 }
 
 const Request::Headers& Request::get_headers() const
@@ -72,9 +83,47 @@ size_t Request::content_length() const
     return _content_length;
 }
 
+bool Request::chunked() const
+{
+    return _chunked;
+}
+
 void Request::append_body(const std::string& body)
 {
     _body += body;
+}
+
+void Request::unchunk_body()
+{
+    std::istringstream stream(_body);
+    std::string        line;
+
+    _body.clear();
+    while (std::getline(stream, line)) {
+        // Remove any '\r' at the end of the line if present
+        if (!line.empty() && line.back() == '\r') {
+            line.pop_back();
+        }
+
+        // Parse the chunk size in hexadecimal
+        std::istringstream size_stream(line);
+        size_t             chunk_size;
+        size_stream >> std::hex >> chunk_size;
+
+        // If chunk size is zero, it's the end of the chunks
+        if (chunk_size == 0)
+            break;
+
+        // Read the actual chunk data based on the parsed chunk size
+        std::string chunk_data(chunk_size, '\0');
+        stream.read(&chunk_data[0], chunk_size);
+
+        // Append the chunk data to the unchunked body
+        _body += chunk_data;
+
+        // Consume the trailing \r\n after each chunk data
+        stream.ignore(2);
+    }
 }
 
 void Request::parse_line(const std::string& line)
@@ -109,9 +158,13 @@ void Request::parse_line(const std::string& line)
 
 void Request::parse_headers(const std::string& headers)
 {
-    std::stringstream headers_stream(headers);
+    if (headers.size() > HEADER_LIMIT) {
+        throw StatusCode::REQUEST_ENTITY_TOO_LARGE;
+    }
 
-    std::string header;
+    std::stringstream headers_stream(headers);
+    std::string       header;
+
     while (std::getline(headers_stream, header, '\n')) {
         if (header == "\r") {
             break;
@@ -136,9 +189,14 @@ void Request::parse_headers(const std::string& headers)
     }
 
     try {
-        _content_length = std::stoul(_headers.at("content-length"));
+        _chunked = _headers.at("transfer-encoding") == "chunked";
     } catch (const std::exception& e) {
-        _content_length = 0;
+        _chunked = false;
+        try {
+            _content_length = std::stoul(_headers.at("content-length"));
+        } catch (const std::exception& e) {
+            _content_length = 0;
+        }
     }
 }
 }  // namespace webserv::http

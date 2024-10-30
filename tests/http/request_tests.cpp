@@ -68,3 +68,51 @@ TEST(RequestTests, BodyTest)
     EXPECT_EQ(request.content_length(), 5);
     EXPECT_EQ(request.body(), "Hello");
 }
+
+TEST(RequestTests, ChunkedHeaderTest)
+{
+    Request request("POST /index.html HTTP/1.1\r\n"
+                    "Host: localhost:8080\r\n"
+                    "User-Agent: curl/7.68.0\r\n"
+                    "Accept: */*\r\n"
+                    "Content-Length: 5\r\n"
+                    "Transfer-Encoding: chunked\r\n"
+                    "\r\n");
+
+    EXPECT_EQ(request.content_length(), 0);
+    EXPECT_EQ(request.chunked(), true);
+    EXPECT_EQ(request.body(), "");
+}
+
+TEST(RequestTests, ChunkedBodyTest)
+{
+    Request request("POST /index.html HTTP/1.1\r\n"
+                    "Host: localhost:8080\r\n"
+                    "User-Agent: curl/7.68.0\r\n"
+                    "Accept: */*\r\n"
+                    "Transfer-Encoding: chunked\r\n"
+                    "\r\n"
+                    "5\r\n"
+                    "Hello\r\n"
+                    "5\r\n"
+                    "World\r\n"
+                    "0\r\n"
+                    "\r\n");
+
+    EXPECT_EQ(request.chunked(), true);
+    request.unchunk_body();
+    EXPECT_EQ(request.body(), "HelloWorld");
+}
+
+TEST(RequestTests, QueryTest)
+{
+    Request request("GET /index.html?query=string&foo=bar HTTP/1.1\r\n"
+                    "Host: localhost:8080\r\n"
+                    "User-Agent: curl/7.68.0\r\n"
+                    "Accept: */*\r\n"
+                    "\r\n");
+
+    EXPECT_EQ(request.get_query(), "query=string&foo=bar");
+    EXPECT_EQ(request.get_uri(), "/index.html");
+}
+

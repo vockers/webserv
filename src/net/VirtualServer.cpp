@@ -2,8 +2,8 @@
 
 namespace webserv::net
 {
-VirtualServer::VirtualServer(int port, const std::string& default_name, ErrorLogger& elog)
-    : Listen(Address("0.0.0.0", port)), _elog(elog), _default_name(default_name)
+VirtualServer::VirtualServer(Address address, const std::string& default_name, ErrorLogger& elog)
+    : Listen(address), _elog(elog), _default_name(default_name)
 {
     _elog.log(ErrorLogger::INFO, "Listening on " + this->get_address().to_string());
 }
