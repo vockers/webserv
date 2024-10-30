@@ -27,6 +27,8 @@ public:
     /// request and sending a response
     void handle_connection();
 
+    bool is_connected() const;
+
 private:
     /// Asynchronously reads a request from the client
     ///
@@ -41,5 +43,7 @@ private:
     std::vector<char> _buffer;
     std::string       _request_str;
     std::string       _response_str;
+
+    bool _is_connected = true;
 };
 }  // namespace webserv::net
