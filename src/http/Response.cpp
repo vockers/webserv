@@ -76,9 +76,7 @@ Response::Response(const Request& request, const Config& config, ErrorLogger& el
         this->file(path);
         break;
     case Request::Method::POST:
-        if (!CGI::is_cgi_request(path, interpreter)) {
-            this->upload_file(request.get_uri(), request.body());
-		}
+        this->upload_file(request.get_uri(), request.body());
         break;
     default:
         throw StatusCode::NOT_IMPLEMENTED;
@@ -96,9 +94,9 @@ Response::Response(StatusCode code, const Config& config, ErrorLogger& elog)
     } catch (...) {
         const std::string& code_str = code_to_string(code);
 
-		std::ifstream template_file("www/default/error.html");
-		if (!template_file.is_open()) {
-			// clang-format off
+        std::ifstream template_file("www/default/error.html");
+        if (!template_file.is_open()) {
+            // clang-format off
 			std::string error_page =
 			"<!DOCTYPE html>\n"
 			"<html lang=\"en-US\"><head><meta charset=\"utf-8\" />\n"
@@ -110,25 +108,25 @@ Response::Response(StatusCode code, const Config& config, ErrorLogger& elog)
 			"        <p align=\"center\">webserv</p>\n"
 			"    </body>\n"
 			"</html>\n";
-			// clang-format on
+            // clang-format on
 
-			this->code(code_str);
-			this->content_type("html");
-			this->body(error_page);
-			return ;
-		}
-		std::stringstream buffer;
-		buffer << template_file.rdbuf();
-		
-		template_file.close();
+            this->code(code_str);
+            this->content_type("html");
+            this->body(error_page);
+            return;
+        }
+        std::stringstream buffer;
+        buffer << template_file.rdbuf();
 
-		std::string html = buffer.str();
-		size_t	  pos  = html.find("{{STATUS_CODE}}");
-		html.replace(pos, 15, code_str);
+        template_file.close();
+
+        std::string html = buffer.str();
+        size_t      pos  = html.find("{{STATUS_CODE}}");
+        html.replace(pos, 15, code_str);
 
         this->code(code_str);
         this->content_type("html");
-		this->body(html);
+        this->body(html);
     }
 }
 
@@ -225,7 +223,7 @@ Response& Response::upload_file(const std::string& uri, const std::string& body)
     try {
         path = location.upload_dir() + filename;
     } catch (...) {
-        throw StatusCode::INTERNAL_SERVER_ERROR;
+        throw StatusCode::FORBIDDEN;
         // TODO: Throw Forbidden if no upload directory
     }
 
@@ -242,7 +240,12 @@ Response& Response::upload_file(const std::string& uri, const std::string& body)
     }
     close(fd);
 
-    generate_response_page("www/default/upload_success.html");
+    try {
+        generate_response_page("www/default/upload_success.html");
+    } catch (...) {
+        this->content_type("html");
+        this->body("File uploaded successfully");
+    }
 
     return *this;
 }
@@ -296,9 +299,9 @@ void Response::file_readable(const std::string& path)
     }
 }
 
-void replace_placeholder(std::string&       html,
-                         const std::string& placeholder,
-                         const std::string& value)
+void Response::replace_placeholder(std::string&       html,
+                                   const std::string& placeholder,
+                                   const std::string& value)
 {
     size_t pos = 0;
     while ((pos = html.find(placeholder, pos)) != std::string::npos) {
@@ -307,11 +310,59 @@ void replace_placeholder(std::string&       html,
     }
 }
 
+Response& Response::autoindex_buildin(const std::string& path, const std::string& uri)
+{
+    std::string html =
+        "<!DOCTYPE html>\n"
+        "<html lang=\"en-US\"><head><meta charset=\"utf-8\" />\n"
+        "    <head>\n"
+        "		<title>Index of " +
+        uri +
+        "</title>\n"
+        "    </head>\n"
+        "    <body>\n"
+        "		<h1>Index of " +
+        uri +
+        "</h1>\n"
+        "    <ul>\n";
+
+    DIR* dir = opendir(path.c_str());
+    if (!dir) {
+        throw StatusCode::FORBIDDEN;
+    }
+
+    struct dirent* entry;
+    while ((entry = readdir(dir)) != nullptr) {
+        std::string name = entry->d_name;
+        if (name == "." || name == "..")
+            continue;
+
+        std::string entry_path = uri + name;
+        struct stat file_stat;
+        if (stat((path + "/" + name).c_str(), &file_stat) == 0) {
+            html += "<li><a href=\"" + entry_path + (S_ISDIR(file_stat.st_mode) ? "/" : "") +
+                    "\">" + name + "</a></li>\n";
+        }
+    }
+    closedir(dir);
+
+    html +=
+        "        </ul>\n"
+        "    </body>\n"
+        "</html>\n";
+
+    this->content_type("html");
+    this->body(html);
+
+    return *this;
+}
+
 Response& Response::autoindex(const std::string& path, const std::string& uri)
 {
+    // generate_response_page("www/default/autoindex.html"); (body access?)
     std::ifstream template_file("www/default/autoindex.html");
     if (!template_file.is_open()) {
-        throw StatusCode::INTERNAL_SERVER_ERROR;
+        return (autoindex_buildin(path, uri));
     }
 
     std::stringstream buffer;
@@ -333,7 +384,7 @@ Response& Response::autoindex(const std::string& path, const std::string& uri)
         if (name == "." || name == "..")
             continue;
 
-        std::string entry_path = uri + "/" + name;
+        std::string entry_path = uri + name;
         struct stat file_stat;
         if (stat((path + "/" + name).c_str(), &file_stat) == 0) {
             entries += "<li><a href=\"" + entry_path + (S_ISDIR(file_stat.st_mode) ? "/" : "") +

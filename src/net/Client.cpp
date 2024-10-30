@@ -75,6 +75,9 @@ Promise<StatusCode> Client::read_request()
 
         // Check if the request body is complete
         if (_request) {
+            std::cout << "content_length: " << _request->content_length() << std::endl;
+            std::cout << "body_size: " << _request->body().size() << std::endl;
+            std::cout << "body: [" << _request->body() << "]" << std::endl;
             if (_request->content_length() == _request->body().size()) {
                 return StatusCode::OK;
             } else if (_request->content_length() < _request->body().size()) {

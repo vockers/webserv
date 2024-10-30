@@ -33,23 +33,11 @@ def test_favicon():
     assert response.headers['Content-Type'] == 'image/x-icon'
 
 def test_not_found():
-    expected_body = '''\
-<!DOCTYPE html>
-<html lang="en-US"><head><meta charset="utf-8" />
-    <head>
-        <title>404 Not Found</title>
-    </head>
-    <body>
-        <h1 align="center">404 Not Found</h1>
-        <p align="center">webserv</p>
-    </body>
-</html>
-'''
-    response = requests.get(f'{BASE_URL}/not-found')
-
-    assert response.status_code == 404
-    assert response.text == expected_body
-    assert response.headers['Content-Type'] == 'text/html'
+	response = requests.get(f'{BASE_URL}/not-found')
+	assert response.status_code == 404
+	assert response.headers['Content-Type'] == 'text/html'
+	assert "<h1>404 Not Found</h1>" in response.text
+	assert "<p>Oops! Something went wrong.</p>" in response.text
 
 def test_not_implemented():
     response = requests.head(f'{BASE_URL}/')
@@ -132,9 +120,10 @@ def test_second_server():
 def test_upload():
     files = {'file': ('test.txt', 'hello world\n')}
     response = requests.post(f'{BASE_URL}/upload/', files=files)
-
+    print("POST /upload/ response:", response.text)
     assert response.status_code == 200
-    assert response.text == "File uploaded"
+    assert "<title>Upload Successful</title>" in response.text
+    assert "<h1>File Uploaded Successfully!</h1>" in response.text
 
     response = requests.get(f'{BASE_URL}/upload/test.txt')
 
@@ -148,30 +137,26 @@ def test_upload():
     assert response.status_code == 404
 
 def test_autoindex():
-    expected_body = '''\
-<!DOCTYPE html>
-<html lang=\"en-US\"><head><meta charset=\"utf-8\" />
-    <head>
-        <title>Index of /1/</title>
-    </head>
-    <body>
-        <h1>Index of /1/</h1>
-        <ul>
-            <li><a href="name.html">name.html</a></li>
-            <li><a href="hello.html">hello.html</a></li>
-        </ul>
-        <hr/><p style='text-align: center;'>webserv</p>
-    </body>
-</html>
-'''
-
     response = requests.get(f'{BASE_URL}/1/')
-
+    
     assert response.status_code == 200
-    assert response.text == expected_body
+    assert response.headers['Content-Type'] == 'text/html'
+    assert "<h1>Index of /1/</h1>" in response.text
+    assert "<a href=\"/1/name.html\">name.html</a>" in response.text
+    assert "<a href=\"/1/hello.html\">hello.html</a>" in response.text
 
 def test_delete_method():
     response = requests.delete(f'{BASE_URL}/2/')
 
     assert response.status_code == 200
     assert response.text == "hello in /2\n"
+    
+def test_cgi_body():
+	url = f'{BASE_URL}/cgi/body.py'
+	data = "hello world"
+	response = requests.post(url, data=data)
+     
+	assert response.status_code == 200
+	assert response.text == data
+    
+    

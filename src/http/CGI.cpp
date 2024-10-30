@@ -40,11 +40,9 @@ CGI::CGI(const Request& request, const std::string& uri, const std::string& inte
         dup2(stdout_pipe[1], STDOUT_FILENO);
         close(stdout_pipe[1]);
 
-        if (request.get_method() == Request::Method::POST) {
-            close(stdin_pipe[1]);
-            dup2(stdin_pipe[0], STDIN_FILENO);
-            close(stdin_pipe[0]);
-        }
+        close(stdin_pipe[1]);
+        dup2(stdin_pipe[0], STDIN_FILENO);
+        close(stdin_pipe[0]);
 
         char** env    = create_envp();
         char*  argv[] = {
