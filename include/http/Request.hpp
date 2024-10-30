@@ -20,6 +20,7 @@ public:
     Request(const std::string& input);
 
     Method             get_method() const;
+    const std::string& method_str() const;
     const std::string& get_uri() const;
     const std::string& get_query() const;
     const Headers&     get_headers() const;
@@ -51,5 +52,6 @@ private:
     void parse_headers(const std::string& headers);
 
     static const MethodMap METHOD_MAP;
+    static constexpr int   HEADER_LIMIT = 8192;
 };
 }  // namespace webserv::http

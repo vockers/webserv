@@ -42,6 +42,17 @@ Request::Method Request::get_method() const
     return _method;
 }
 
+const std::string& Request::method_str() const
+{
+    static const std::map<Method, std::string> METHOD_STR = {
+        {Method::GET, "GET"},
+        {Method::POST, "POST"},
+        {Method::DELETE, "DELETE"},
+    };
+
+    return METHOD_STR.at(_method);
+}
+
 const Request::Headers& Request::get_headers() const
 {
     return _headers;
@@ -147,9 +158,13 @@ void Request::parse_line(const std::string& line)
 
 void Request::parse_headers(const std::string& headers)
 {
-    std::stringstream headers_stream(headers);
+    if (headers.size() > HEADER_LIMIT) {
+        throw StatusCode::REQUEST_ENTITY_TOO_LARGE;
+    }
 
-    std::string header;
+    std::stringstream headers_stream(headers);
+    std::string       header;
+
     while (std::getline(headers_stream, header, '\n')) {
         if (header == "\r") {
             break;

@@ -42,9 +42,25 @@ const std::unordered_map<std::string, std::string> Response::CONTENT_TYPES = {
 Response::Response(const Request& request, const Config& config, ErrorLogger& elog)
     : _config(config), _content_length(0), _elog(elog)
 {
-    this->code(StatusCode::OK);
     const Config& location = config.location(request.get_uri());
     std::string   path     = location.root() + request.get_uri();
+
+    if (request.body().size() > location.client_max_body_size()) {
+        throw StatusCode::REQUEST_ENTITY_TOO_LARGE;
+    }
+    if (location.limit_except(request.method_str()) == false) {
+        throw StatusCode::METHOD_NOT_ALLOWED;
+    }
+
+    // Redirect if return directive is set
+    if (location.return_uri() != "") {
+        this->code(static_cast<StatusCode>(location.return_code()));
+        this->header("Location", location.return_uri());
+        this->body("");
+        return;
+    }
+
+    this->code(StatusCode::OK);
 
     std::string interpreter;
     if (CGI::is_cgi_request(path, interpreter)) {
@@ -219,9 +235,12 @@ const std::string& Response::code_to_string(StatusCode code)
     // clang-format off
     static const std::unordered_map<StatusCode, std::string>  STATUS_CODES = {
         { StatusCode::OK, "200 OK" },
+        { StatusCode::MOVED_PERMANENTLY, "301 Moved Permanently" },
         { StatusCode::BAD_REQUEST, "400 Bad Request" },
 		{ StatusCode::FORBIDDEN, "403 Forbidden" },
         { StatusCode::NOT_FOUND, "404 Not Found" },
+        { StatusCode::METHOD_NOT_ALLOWED, "405 Method Not Allowed" },
+        { StatusCode::REQUEST_ENTITY_TOO_LARGE, "413 Request Entity Too Large" },
         { StatusCode::INTERNAL_SERVER_ERROR, "500 Internal Server Error" },
         { StatusCode::NOT_IMPLEMENTED, "501 Not Implemented" },
         { StatusCode::HTTP_VERSION_NOT_SUPPORTED, "505 HTTP Version Not Supported" },

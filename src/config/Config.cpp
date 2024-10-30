@@ -40,7 +40,7 @@ const Config::Constraint Config::CONSTRAINTS[] = {
     {{HTTP}, false, nullopt, 0},                 // SERVER
     {{SERVER}, false, 1},                        // LOCATION
     {{SERVER}, false, 1},                        // SERVER_NAME
-    {{SERVER}, false, 1},                        // LISTEN
+    {{SERVER}, false, 1, 2},                     // LISTEN
     {{HTTP, SERVER, LOCATION}, true, 1, 1},      // ROOT
     {{HTTP, SERVER, LOCATION}, true, 1},         // INDEX
     {{MAIN}, true, 1, 1},                        // LOG_LEVEL
@@ -58,14 +58,14 @@ const Config::Parameters Config::DEFAULT_PARAMS[] = {
     {},                // SERVER
     {},                // LOCATION
     {""},              // SERVER_NAME
-    {80},              // LISTEN
+    {80, "0.0.0.0"},   // LISTEN
     {"./www/default"}, // ROOT
     {"index.html"},    // INDEX
     {"info"},          // LOG_LEVEL
     {},                // LIMIT_EXCEPT
     {false},           // AUTOINDEX
     {1048576},         // CLIENT_MAX_BODY_SIZE (1MiB)
-    {},                // RETURN
+    {301},             // RETURN
     {},                // ERROR_PAGE
     {},                // UPLOAD_DIR
 };
@@ -224,6 +224,11 @@ const std::string& Config::server_name() const
     return this->value<std::string>(SERVER_NAME, 0);
 }
 
+const std::string& Config::host() const
+{
+    return this->value<std::string>(LISTEN, 1);
+}
+
 const std::string& Config::root() const
 {
     return this->value<std::string>(ROOT, 0);
@@ -260,14 +265,41 @@ const std::string& Config::error_page(int code) const
     throw std::runtime_error("Error page not found");
 }
 
+const std::string& Config::return_uri() const
+{
+    const static std::string empty = "";
+
+    auto return_it = this->begin(Type::RETURN);
+    if (return_it == this->end()) {
+        return empty;
+    }
+    return std::get<std::string>(return_it->_parameters.at(return_it->_parameters.size() - 1));
+}
+
 const std::string& Config::upload_dir() const
 {
     return this->value<std::string>(UPLOAD_DIR, 0);
 }
 
-int Config::listen() const
+int Config::port() const
 {
     return this->value<int>(LISTEN, 0);
+}
+
+bool Config::limit_except(const std::string& method) const
+{
+    const Config* config = this->get(Type::LIMIT_EXCEPT);
+    if (config == nullptr) {
+        return true;
+    }
+
+    for (const auto& param : config->get_parameters()) {
+        if (std::get<std::string>(param) == method) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 bool Config::autoindex() const
@@ -278,6 +310,15 @@ bool Config::autoindex() const
 int Config::client_max_body_size() const
 {
     return this->value<int>(CLIENT_MAX_BODY_SIZE, 0);
+}
+
+int Config::return_code() const
+{
+    auto return_it = this->begin(Type::RETURN);
+    if (return_it == this->end() || return_it->_parameters.size() == 1) {
+        return std::get<int>(DEFAULT_PARAMS[static_cast<int>(Type::RETURN)].at(0));
+    }
+    return std::get<int>(return_it->_parameters.at(0));
 }
 
 Type Config::get_type() const

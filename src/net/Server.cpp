@@ -4,7 +4,6 @@
 #include <sys/epoll.h>
 #include <unistd.h>
 
-#include <algorithm>
 #include <memory>
 
 #include "async/Poller.hpp"
@@ -17,11 +16,11 @@ Server::Server(const Config& config, ErrorLogger& elog) : _config(config), _elog
 {
     for (auto it = config.begin(Config::Type::SERVER); it != config.end();
          it      = it.next(Config::Type::SERVER)) {
-        if (_virtual_servers.find(it->listen()) == _virtual_servers.end()) {
-            _virtual_servers[it->listen()] =
-                std::make_unique<VirtualServer>(it->listen(), it->server_name(), elog);
+        if (_virtual_servers.find(it->port()) == _virtual_servers.end()) {
+            _virtual_servers[it->port()] = std::make_unique<VirtualServer>(
+                Address(it->host(), it->port()), it->server_name(), elog);
         }
-        _virtual_servers[it->listen()]->add_config(*it);
+        _virtual_servers[it->port()]->add_config(*it);
     }
 }
 

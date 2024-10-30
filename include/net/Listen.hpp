@@ -1,8 +1,5 @@
 #pragma once
 
-#include <memory>
-
-#include "async/Promise.hpp"
 #include "net/Socket.hpp"
 
 namespace webserv::net

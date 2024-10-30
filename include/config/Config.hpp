@@ -119,7 +119,10 @@ public:
         }
 
         if (directive->get_parameters().size() <= col) {
-            throw std::runtime_error("No value for this directive");
+            if (get_default_params(type).size() <= col) {
+                throw std::runtime_error("No value for this directive");
+            }
+            return std::get<T>(get_default_params(type)[col]);
         }
 
         return std::get<T>(directive->get_parameters()[col]);
@@ -132,15 +135,19 @@ public:
     const Config& location(const std::string& uri) const;
 
     const std::string& server_name() const;
+    const std::string& host() const;
     const std::string& root() const;
     const std::string& index() const;
     const std::string& log_level() const;
     const std::string& error_page(int code) const;
+    const std::string& return_uri() const;
     const std::string& upload_dir() const;
 
-    int  listen() const;
+    int  port() const;
+    bool limit_except(const std::string& method) const;
     bool autoindex() const;
     int  client_max_body_size() const;
+    int  return_code() const;
 
     Type               get_type() const;
     const std::string& get_name() const;

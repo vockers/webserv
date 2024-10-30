@@ -1,6 +1,5 @@
 #pragma once
 
-#include <functional>
 #include <string>
 #include <unordered_map>
 
@@ -20,7 +19,7 @@ public:
     using ConfigMap = std::unordered_map<std::string, const Config*>;
     using Clients   = std::vector<std::unique_ptr<Client>>;
 
-    VirtualServer(int port, const std::string& default_name, ErrorLogger& elog);
+    VirtualServer(Address address, const std::string& default_name, ErrorLogger& elog);
 
     /// @brief Accepts new connections and adds them to the clients list
     void listen();

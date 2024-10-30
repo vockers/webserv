@@ -10,7 +10,6 @@ namespace webserv::net
 {
 using config::Config;
 using http::Request;
-/*using http::Response;*/
 using StatusCode = http::Response::StatusCode;
 using utils::ErrorLogger;
 
