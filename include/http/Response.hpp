@@ -21,6 +21,7 @@ public:
     enum class StatusCode : int
     {
         OK                         = 200,
+        CREATED                    = 201,
         MOVED_PERMANENTLY          = 301,
         BAD_REQUEST                = 400,
         FORBIDDEN                  = 403,
@@ -72,11 +73,17 @@ public:
     /// @param body Request body
     Response& upload_file(const std::string& uri, const std::string& body);
 
-    /// @brief Generates an autoindex page for a directory
+    /// @brief Generates an autoindex page for a directory with a html template
     ///
     /// @param path Path to the directory
     /// @param uri URI of the request
     Response& autoindex(const std::string& path, const std::string& uri);
+
+    /// @brief Generates an autoindex page for a directory with a buildin template
+    ///
+    /// @param path Path to the directory
+    /// @param uri URI of the request
+    Response& autoindex_buildin(const std::string& path, const std::string& uri);
 
     /// @brief Returns the Content-Length header value
     ///
@@ -108,6 +115,21 @@ public:
     static const std::string& code_to_string(StatusCode code);
 
     static const std::unordered_map<std::string, std::string> CONTENT_TYPES;
+    bool                                                      is_cgi(const std::string& uri);
+
+    /// @brief generate a response page from a template
+    ///
+    /// @param path Path to the template file
+    void generate_response_page(const std::string& path);
+
+    /// @brief replace a placeholder in a html template
+    ///
+    /// @param html The html template
+    /// @param placeholder The placeholder to replace
+    /// @param value The value to replace the placeholder with
+    void replace_placeholder(std::string&       html,
+                             const std::string& placeholder,
+                             const std::string& value);
 
 private:
     const Config& _config;

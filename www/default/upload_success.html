@@ -3,51 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>400 Bad Request</title>
+    <title>Upload Successful</title>
     <style>
         body {
             display: flex;
             justify-content: center;
             align-items: center;
-            flex-direction: column;
             height: 100vh;
             margin: 0;
             background: radial-gradient(circle, #1e1e2f, #15151f);
             font-family: 'Courier New', Courier, monospace;
             color: #00ffcc;
         }
+        .message-container {
+            text-align: center;
+        }
         h1 {
-            color: #ff66cc;
-            text-shadow: 0 0 5px #ff66cc, 0 0 10px #ff66cc, 0 0 15px #ff66cc;
-            text-align: center;
+            color: #00ffcc;
         }
-        p {
-            color: #cccccc;
-            text-align: center;
-            font-size: 1.2em;
-        }
-        .button {
+        .back-button {
             margin-top: 20px;
             padding: 10px 20px;
+            font-family: 'Courier New', Courier, monospace;
             font-size: 16px;
-            color: #00ffcc;
             background-color: #333;
+            color: #00ffcc;
             border: 1px solid #00ffcc;
             border-radius: 5px;
             cursor: pointer;
             text-decoration: none;
-            text-align: center;
-            transition: background-color 0.3s;
+            transition: background-color 0.3s, color 0.3s;
         }
-        .button:hover {
+        .back-button:hover {
             background-color: #00ffcc;
             color: #333;
         }
     </style>
 </head>
 <body>
-    <h1>400 Bad Request</h1>
-    <p>Invalid request.</p>
-    <a href="/" class="button">Go Back to Home Page</a>
+    <div class="message-container">
+        <h1>File Uploaded Successfully!</h1>
+        <a href="/" class="back-button">Go Back to Home Page</a>
+    </div>
 </body>
 </html>
