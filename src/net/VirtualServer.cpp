@@ -20,12 +20,12 @@ void VirtualServer::listen()
     });
 
     // Remove disconnected clients
-    // _clients.erase(std::remove_if(_clients.begin(),
-    //                               _clients.end(),
-    //                               [](const std::unique_ptr<Client>& client) {
-    //                                   return client->get_fd() == -1;
-    //                               }),
-    //                _clients.end());
+    _clients.erase(std::remove_if(_clients.begin(),
+                                  _clients.end(),
+                                  [](const std::unique_ptr<Client>& client) {
+                                      return client->is_connected() == false;
+                                  }),
+                   _clients.end());
 }
 
 void VirtualServer::add_config(const Config& config)

@@ -27,6 +27,9 @@ void Client::handle_connection()
     _response_str.clear();
 
     this->read_request().then([this](StatusCode status_code) {
+        if (_is_connected == false) {
+            return;
+        }
         _elog.log("Received request from " + get_address().to_string());
 
         // Create a response and send it back to the client
@@ -51,9 +54,19 @@ void Client::handle_connection()
     });
 }
 
+bool Client::is_connected() const
+{
+    return _is_connected;
+}
+
 Promise<StatusCode> Client::read_request()
 {
     return Promise<StatusCode>([this]() -> std::optional<StatusCode> {
+        if (this->_fd == -1) {
+            this->_is_connected = false;
+            return StatusCode::OK;
+        }
+
         // Read data from the client's socket and append it to the request
         this->read(_buffer).then([this](ssize_t bytes_read) {
             if (bytes_read == 0) {
