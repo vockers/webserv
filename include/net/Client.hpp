@@ -10,6 +10,7 @@ namespace webserv::net
 {
 using config::Config;
 using http::Request;
+using http::Response;
 using StatusCode = http::Response::StatusCode;
 using utils::ErrorLogger;
 
@@ -38,7 +39,8 @@ private:
     VirtualServer& _server;
     ErrorLogger&   _elog;
 
-    std::unique_ptr<Request> _request;
+    std::unique_ptr<Request>  _request;
+    std::unique_ptr<Response> _response;
 
     std::vector<char> _buffer;
     std::string       _request_str;

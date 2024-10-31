@@ -6,74 +6,50 @@
 
 #include <algorithm>
 #include <cstring>
-#include <iostream>
 
 #include "http/Response.hpp"
+#include "utils/std_utils.hpp"
+
+#ifndef BUFFER_SIZE
+#define BUFFER_SIZE 4096
+#endif
 
 namespace webserv::http
 {
-using utils::ErrorLogger;
-
 CGI::CGI(const Request& request, const std::string& uri, const std::string& interpreter)
-    : _request(request)
+    : _request(request), _state(State::IDLE)
 {
-    try {
-        try_file(uri);
-    } catch (Response::StatusCode code) {
-        throw code;
-    }
+    this->try_file(uri);
 
-    int stdin_pipe[2];
-    int stdout_pipe[2];
-    if (pipe(stdout_pipe) == -1 ||
-        (request.get_method() == Request::Method::POST && pipe(stdin_pipe) == -1)) {
+    if (pipe(_stdout_pipe) == -1 || pipe(_stdin_pipe) == -1) {
         throw Response::StatusCode::INTERNAL_SERVER_ERROR;
     }
 
-    pid_t pid = fork();
-    if (pid < 0) {
+    _pid = fork();
+    if (_pid < 0) {
         throw Response::StatusCode::INTERNAL_SERVER_ERROR;
     }
 
-    if (pid == 0) {
-        close(stdout_pipe[0]);
-        dup2(stdout_pipe[1], STDOUT_FILENO);
-        close(stdout_pipe[1]);
+    if (_pid == 0) {
+        close(_stdout_pipe[0]);
+        dup2(_stdout_pipe[1], STDOUT_FILENO);
+        close(_stdout_pipe[1]);
 
-        close(stdin_pipe[1]);
-        dup2(stdin_pipe[0], STDIN_FILENO);
-        close(stdin_pipe[0]);
+        close(_stdin_pipe[1]);
+        dup2(_stdin_pipe[0], STDIN_FILENO);
+        close(_stdin_pipe[0]);
 
         char** env    = create_envp();
         char*  argv[] = {
             const_cast<char*>(interpreter.c_str()), const_cast<char*>(uri.c_str()), nullptr};
 
         if (execve(interpreter.c_str(), argv, env) == -1) {
-            free_envp(env);
+            utils::free_string_array(env);
             exit(EXIT_FAILURE);
         }
     } else {
-        close(stdout_pipe[1]);
-
-        if (request.get_method() == Request::Method::POST) {
-            close(stdin_pipe[0]);
-            write(stdin_pipe[1], request.body().data(), request.body().size());
-            close(stdin_pipe[1]);
-        }
-
-        int status;
-        waitpid(pid, &status, 0);
-        if (WIFEXITED(status) && WEXITSTATUS(status) != 0) {
-            throw Response::StatusCode::INTERNAL_SERVER_ERROR;
-        }
-
-        char    buffer[BUFSIZE];
-        ssize_t bytes_read;
-        _output.clear();
-        while ((bytes_read = read(stdout_pipe[0], buffer, BUFSIZE)) > 0) {
-            _output.append(buffer, bytes_read);
-        }
-        close(stdout_pipe[0]);
+        close(_stdout_pipe[1]);
+        close(_stdin_pipe[0]);
     }
 }
 
@@ -142,14 +118,6 @@ char** CGI::convert_map_to_envp(const std::unordered_map<std::string, std::strin
     return envp;
 }
 
-void CGI::free_envp(char** envp) const
-{
-    for (size_t i = 0; envp[i] != nullptr; ++i) {
-        delete[] envp[i];
-    }
-    delete[] envp;
-}
-
 bool CGI::is_cgi_request(const std::string& uri, std::string& interpreter)
 {
     std::unordered_map<std::string, std::string> cgi_interpreters = {
@@ -170,8 +138,74 @@ bool CGI::is_cgi_request(const std::string& uri, std::string& interpreter)
     return false;
 }
 
-std::string CGI::get_output() const
+CGI::State CGI::state() const
 {
-    return _output;
+    return _state;
+}
+
+Promise<ssize_t> CGI::read(std::string& buffer)
+{
+    return Promise<ssize_t>(
+        [this, &buffer]() -> std::optional<ssize_t> {
+            buffer.resize(BUFFER_SIZE);
+            ssize_t bytes_read = ::read(_stdout_pipe[0], buffer.data(), BUFFER_SIZE);
+            buffer.resize(bytes_read);
+            if (bytes_read == -1) {
+                return std::nullopt;
+            }
+            return bytes_read;
+        },
+        _stdout_pipe[0],
+        async::Event::READABLE);
+}
+
+Promise<ssize_t> CGI::write(const std::string& buffer)
+{
+    return Promise<ssize_t>(
+        [this, &buffer]() -> std::optional<ssize_t> {
+            ssize_t bytes_written = ::write(_stdin_pipe[1], buffer.data(), buffer.size());
+            if (bytes_written == -1) {
+                return std::nullopt;
+            }
+            return bytes_written;
+        },
+        _stdin_pipe[1],
+        async::Event::WRITABLE);
+}
+
+Promise<std::string> CGI::get_output()
+{
+    _state = State::WRITE;
+
+    return Promise<std::string>([this]() -> std::optional<std::string> {
+        if (_state == State::WRITE) {
+            this->write(_request.body()).then([this](ssize_t bytes_written) {
+                if (bytes_written == 0) {
+                    close(_stdin_pipe[1]);
+                    int status;
+                    waitpid(_pid, &status, 0);
+                    if (WIFEXITED(status) && WEXITSTATUS(status) != 0) {
+                        throw Response::StatusCode::INTERNAL_SERVER_ERROR;
+                    }
+                    _state = State::READ;
+                }
+            });
+        }
+        if (_state == State::READ) {
+            std::string buffer;
+            this->read(buffer).then([this, &buffer](ssize_t bytes_read) {
+                if (bytes_read == 0) {
+                    _state = State::DONE;
+                    close(_stdout_pipe[0]);
+                } else {
+                    _output += buffer;
+                }
+            });
+        }
+        if (_state == State::DONE) {
+            return _output;
+        }
+        return std::nullopt;
+    });
 }
 }  // namespace webserv::http

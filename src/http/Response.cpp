@@ -42,7 +42,7 @@ const std::unordered_map<std::string, std::string> Response::CONTENT_TYPES = {
 // clang-format on
 
 Response::Response(const Request& request, const Config& config, ErrorLogger& elog)
-    : _config(config), _content_length(0), _elog(elog)
+    : _config(config), _content_length(0), _elog(elog), _cgi(nullptr)
 {
     const Config& location = config.location(request.get_uri());
     std::string   path     = location.root() + request.get_uri();
@@ -67,9 +67,7 @@ Response::Response(const Request& request, const Config& config, ErrorLogger& el
     std::string interpreter;
     if (CGI::is_cgi_request(path, interpreter)) {
         try {
-            CGI cgi(request, path, interpreter);
-            this->content_type("html");
-            this->body(cgi.get_output());
+            _cgi.reset(new CGI(request, path, interpreter));
             return;
         } catch (StatusCode status_code) {
             throw status_code;
@@ -355,6 +353,24 @@ void Response::replace_placeholder(std::string&       html,
         html.replace(pos, placeholder.length(), value);
         pos += value.length();
     }
+}
+
+Promise<std::string> Response::get_output()
+{
+    return Promise<std::string>([this]() -> std::optional<std::string> {
+        if (_cgi && _cgi->state() != CGI::State::DONE) {
+            if (_cgi->state() == CGI::State::IDLE) {
+                _cgi->get_output().then([this](const std::string& output) {
+                    this->content_type("html");
+                    this->body(output);
+                });
+            }
+            if (_cgi->state() != CGI::State::DONE) {
+                return std::nullopt;
+            }
+        }
+        return this->str();
+    });
 }
 
 Response& Response::autoindex_buildin(const std::string& path, const std::string& uri)

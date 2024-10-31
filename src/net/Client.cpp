@@ -23,6 +23,7 @@ Client::~Client()
 void Client::handle_connection()
 {
     _request.reset();
+    _response.reset();
     _request_str.clear();
     _response_str.clear();
 
@@ -38,19 +39,22 @@ void Client::handle_connection()
             if (status_code != StatusCode::OK) {
                 throw status_code;
             }
-            host_name     = _request->host().substr(0, _request->host().find(':'));
-            _response_str = Response(*_request, _server.get_config(host_name), _elog).str();
+            host_name = _request->host().substr(0, _request->host().find(':'));
+            _response.reset(new Response(*_request, _server.get_config(host_name), _elog));
         } catch (StatusCode status_code) {
-            _response_str = Response(status_code, _server.get_config(host_name), _elog).str();
+            _response.reset(new Response(status_code, _server.get_config(host_name), _elog));
         }
-        this->write(std::vector<char>(_response_str.begin(), _response_str.end()))
-            .then([this](ssize_t bytes_written) {
-                _elog.log("Sent response to " + get_address().to_string() + ": " +
-                          std::to_string(bytes_written) + " bytes");
 
-                // Handle the next request and response
-                this->handle_connection();
-            });
+        _response->get_output().then([this](const std::string& response_str) {
+            this->write(std::vector<char>(response_str.begin(), response_str.end()))
+                .then([this](ssize_t bytes_written) {
+                    _elog.log("Sent response to " + get_address().to_string() + ": " +
+                              std::to_string(bytes_written) + " bytes");
+
+                    // Handle the next request and response
+                    this->handle_connection();
+                });
+        });
     });
 }
 
