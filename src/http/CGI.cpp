@@ -17,11 +17,7 @@ using utils::ErrorLogger;
 CGI::CGI(const Request& request, const std::string& uri, const std::string& interpreter)
     : _request(request)
 {
-    try {
-        try_file(uri);
-    } catch (Response::StatusCode code) {
-        throw code;
-    }
+    try_file(uri);  // throws if file does not exist or is not executable
 
     int stdin_pipe[2];
     int stdout_pipe[2];
@@ -54,12 +50,10 @@ CGI::CGI(const Request& request, const std::string& uri, const std::string& inte
         }
     } else {
         close(stdout_pipe[1]);
+        close(stdin_pipe[0]);
 
-        if (request.get_method() == Request::Method::POST) {
-            close(stdin_pipe[0]);
-            write(stdin_pipe[1], request.body().data(), request.body().size());
-            close(stdin_pipe[1]);
-        }
+        write(stdin_pipe[1], request.body().data(), request.body().size());
+        close(stdin_pipe[1]);
 
         int status;
         waitpid(pid, &status, 0);
