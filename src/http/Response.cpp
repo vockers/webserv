@@ -65,6 +65,7 @@ Response::Response(const Request& request, const Config& config, ErrorLogger& el
     std::string interpreter;
     if (CGI::is_cgi_request(path, interpreter)) {
         try {
+            this->code(StatusCode::OK);
             _cgi.reset(new CGI(request, path, interpreter));
             return;
         } catch (StatusCode status_code) {
@@ -194,7 +195,7 @@ Response& Response::file(const std::string& path)
 }
 
 Response& Response::content_type(const std::string& extension)
-{Please include a summary of the changes
+{
     this->header("Content-Type", get_content_type(extension));
 
     return *this;
