@@ -1,15 +1,19 @@
 #pragma once
 
+#include <memory>
 #include <sstream>
 #include <string>
 #include <unordered_map>
 
+#include "async/Promise.hpp"
 #include "config/Config.hpp"
+#include "http/CGI.hpp"
 #include "http/Request.hpp"
 #include "utils/Logger.hpp"
 
 namespace webserv::http
 {
+using async::Promise;
 using config::Config;
 using utils::ErrorLogger;
 
@@ -136,10 +140,14 @@ public:
                              const std::string& placeholder,
                              const std::string& value);
 
+    Promise<std::string> get_output();
+
 private:
     const Config& _config;
 
     ssize_t _content_length;
+
+    std::unique_ptr<CGI> _cgi;
 
     ErrorLogger& _elog;
 };

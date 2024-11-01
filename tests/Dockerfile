@@ -4,6 +4,7 @@ FROM ubuntu:22.04
 RUN apt-get update && apt-get install -y \
     build-essential \
     libgtest-dev \
+    clang \
     googletest
 
 # Set up working directory
@@ -13,7 +14,7 @@ WORKDIR /app
 COPY ../. .
 
 # Compile the source code
-RUN g++ -std=c++23 -g -fsanitize=address -I./include -o test \
+RUN clang++ -std=c++20 -g -fsanitize=address -I./include -o test \
     src/config/Config.cpp \
     src/config/Lexer.cpp \
     src/config/Parser.cpp \

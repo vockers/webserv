@@ -3,8 +3,7 @@ SRC_DIR		= ./src
 INCLUDE_DIR	= ./include
 OBJ_DIR		= ./.obj
 
-# TODO: Switch to clang++
-CXX			= g++
+CXX			  = clang++
 CXXFLAGS	= -I$(INCLUDE_DIR) -std=c++23
 DEBUG_FLAGS	= -MMD -MP -g -fsanitize=address
 

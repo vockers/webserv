@@ -16,4 +16,6 @@ bool contains(const Container& container, const T& value)
 {
     return std::find(container.begin(), container.end(), value) != container.end();
 }
+
+void free_string_array(char** array);
 }  // namespace webserv::utils
