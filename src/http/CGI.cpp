@@ -17,7 +17,7 @@
 namespace webserv::http
 {
 CGI::CGI(const Request& request, const std::string& uri, const std::string& interpreter)
-    : _request(request), _state(State::IDLE)
+    : _request(request), _state(State::IDLE), _bytes_written(0)
 {
     this->try_file(uri);
 
@@ -180,7 +180,8 @@ Promise<std::string> CGI::get_output()
     return Promise<std::string>([this]() -> std::optional<std::string> {
         if (_state == State::WRITE) {
             this->write(_request.body()).then([this](ssize_t bytes_written) {
-                if (bytes_written == 0) {
+                _bytes_written += bytes_written;
+                if (_bytes_written >= _request.body().size()) {
                     close(_stdin_pipe[1]);
                     int status;
                     waitpid(_pid, &status, 0);

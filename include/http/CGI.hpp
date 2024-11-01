@@ -43,6 +43,7 @@ public:
 
 private:
     State          _state;
+    size_t         _bytes_written;
     std::string    _buffer;
     std::string    _output;
     const Request& _request;
