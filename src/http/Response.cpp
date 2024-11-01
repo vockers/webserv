@@ -62,12 +62,11 @@ Response::Response(const Request& request, const Config& config, ErrorLogger& el
         return;
     }
 
-    this->code(StatusCode::OK);
-
     std::string interpreter;
     if (CGI::is_cgi_request(path, interpreter)) {
         try {
             CGI cgi(request, path, interpreter);
+            this->code(StatusCode::OK);
             this->content_type("html");
             this->body(cgi.get_output());
             return;
@@ -79,9 +78,11 @@ Response::Response(const Request& request, const Config& config, ErrorLogger& el
     case Request::Method::GET:
         if (path.ends_with("/")) {
             try {
+                this->code(StatusCode::OK);
                 this->file(path + location.index());
             } catch (StatusCode status_code) {
                 if (location.autoindex()) {
+                    // this->code(StatusCode::OK);
                     this->autoindex(path, request.get_uri());
                 } else {
                     throw status_code;
@@ -89,6 +90,7 @@ Response::Response(const Request& request, const Config& config, ErrorLogger& el
             }
             break;
         }
+        this->code(StatusCode::OK);
         this->file(path);
         break;
     case Request::Method::POST:
@@ -182,6 +184,7 @@ Response& Response::file(const std::string& path)
     if (!file.is_open()) {
         throw StatusCode::NOT_FOUND;
         // TODO: Throw Forbidden if no read permission
+        // This already checks in the file_exists and is_readable right?
     }
     std::stringstream ss;
     ss << file.rdbuf();
@@ -243,7 +246,6 @@ Response& Response::upload_file(const std::string& uri, const std::string& body)
         path = location.upload_dir() + filename;
     } catch (...) {
         throw StatusCode::FORBIDDEN;
-        // TODO: Throw Forbidden if no upload directory
     }
 
     int permissions = is_cgi(path) ? 0755 : 0644;
@@ -258,14 +260,14 @@ Response& Response::upload_file(const std::string& uri, const std::string& body)
         throw StatusCode::INTERNAL_SERVER_ERROR;
     }
     close(fd);
-
+    this->code(StatusCode::CREATED);
     try {
         generate_response_page("www/default/upload_success.html");
     } catch (...) {
         this->content_type("html");
         this->body("File uploaded successfully");
     }
-
+    // TODO: after creation, status code should be 201
     return *this;
 }
 
@@ -284,6 +286,8 @@ Response& Response::delete_file(const std::string& uri)
     if (std::filesystem::remove(path) == false) {
         throw StatusCode::INTERNAL_SERVER_ERROR;
     }
+
+    this->code(StatusCode::OK);
 
     try {
         generate_response_page("www/default/deletion_success.html");

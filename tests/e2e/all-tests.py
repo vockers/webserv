@@ -120,8 +120,8 @@ def test_second_server():
 def test_upload():
     files = {'file': ('test.txt', 'hello world\n')}
     response = requests.post(f'{BASE_URL}/upload/', files=files)
-    print("POST /upload/ response:", response.text)
-    assert response.status_code == 200
+
+    assert response.status_code == 201
     assert "<title>Upload Successful</title>" in response.text
     assert "<h1>File Uploaded Successfully!</h1>" in response.text
 
@@ -149,7 +149,7 @@ def test_delete_method():
     file_data = {'file': ('test_delete.txt', 'sample content\n')}
     upload_response = requests.post(f'{BASE_URL}/upload/', files=file_data)
 
-    assert upload_response.status_code == 200
+    assert upload_response.status_code == 201
     assert "File Uploaded Successfully!" in upload_response.text
 
     get_response = requests.get(f'{BASE_URL}/upload/test_delete.txt')
@@ -166,7 +166,6 @@ def test_delete_method():
     
     delete_not_found_response = requests.delete(f'{BASE_URL}/upload/not_found.txt')
     assert delete_not_found_response.status_code == 404
-
 
 def test_cgi_body():
 	url = f'{BASE_URL}/cgi/body.py'
